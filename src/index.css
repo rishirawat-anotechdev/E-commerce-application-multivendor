@@ -15,3 +15,14 @@ code {
     monospace;
 }
 
+/* Add this in your global CSS file (e.g., index.css or App.css) */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
