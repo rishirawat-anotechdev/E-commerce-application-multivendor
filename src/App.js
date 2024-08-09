@@ -1,17 +1,18 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes,  } from 'react-router-dom';
+import {  Route, Routes,  } from 'react-router-dom';
 import LayoutPage from './common/layout/LayoutPage';
+import { routeDefinitions } from './routes/RouteDefinations';
 
 
 const App = () => {
   return (
-    <Router>
-      <LayoutPage>
-        <Routes>
-     
-        </Routes>
-      </LayoutPage>
-    </Router>
+    <Routes>
+      {
+        routeDefinitions.map(({path, element}, index) => (
+          <Route key={index} index path={path} element={<LayoutPage>{element}</LayoutPage>} />
+        ))
+      }
+    </Routes>
   );
 }
 
