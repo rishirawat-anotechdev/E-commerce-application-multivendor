@@ -8,7 +8,7 @@ const App = () => {
     <Router>
       <LayoutPage>
         <Routes>
-     hiii
+     
         </Routes>
       </LayoutPage>
     </Router>
