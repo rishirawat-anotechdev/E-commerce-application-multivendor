@@ -1,5 +1,5 @@
 import React from 'react';
-import hero from "../../assets/hero1.png";
+import hero from "../../assets/hero.png";
 import EmailIcon from '@mui/icons-material/Email';
 import LocalPhoneIcon from '@mui/icons-material/LocalPhone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -15,7 +15,7 @@ const FooterPage = () => {
         {/* Logo and Description */}
         <div className="space-y-4">
           <div className="flex items-center">
-            <img src={hero} alt="" className="w-6 h-6 mr-2" />
+            <img src={hero} alt="" className="w-16 h-16 mr-2" />
             <h2 className="text-3xl font-bold text-green-600">organis</h2>
           </div>
           <p className="text-gray-600 text-sm">

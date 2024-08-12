@@ -15,7 +15,7 @@ const OfferSection = ({ title, discount, image, bgColor }) => {
             <img 
               src={image} 
               alt={title} 
-              className="w-full h-full object-cover transition-transform hover:scale-110"
+              className="w-full h-full    transition-transform hover:scale-110"
             />
           </div>
         </div>
