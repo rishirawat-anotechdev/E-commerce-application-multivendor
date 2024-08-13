@@ -37,7 +37,7 @@ const HeroPage = () => {
     };
   }, []);
   return (
-    <div className="relative h-auto w-full flex items-center justify-center px-4">
+    <div className="relative h-auto w-full mt-20 flex items-center justify-center px-4">
       <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-6xl">
         <div className="text-center md:text-left ml-4 md:w-1/2 z-0">
           <h1 className="text-5xl md:text-6xl font-bold text-black mb-4">

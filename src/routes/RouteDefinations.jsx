@@ -5,6 +5,7 @@ import CheckoutForm from "../components/Payment/CheckOutPage";
 import HomePage from "../pages/HomePage";
 
 export const routeDefinitions = [
+  { path: "/", element: <HomePage /> },
   { path: "/homepage", element: <HomePage /> },
   { path: "/register", element: <RegisterPage /> },
   { path: "/login", element: <LoginPage /> },

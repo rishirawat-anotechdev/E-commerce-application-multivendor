@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import hero3 from '../../assets/hero3.png'
+import logo from '../../assets/logo.png'
 import {
   AppBar,
   Toolbar,
@@ -159,13 +159,11 @@ const HeaderPage = () => {
         }}
       >
         <img
-          src={hero3}
+          src={logo}
           alt='Nest'
-          style={{ height: '40px', marginRight: '8px' }}
+          style={{ width: '120px', marginRight: '8px' }}
         />
-        <Typography variant='h6' noWrap sx={{ color: '#38a169' }}>
-          Shop Now
-        </Typography>
+        
       </Box>
       <Divider />
       <List>
@@ -251,13 +249,11 @@ const HeaderPage = () => {
             {!isMobile && (
               <Link to={"/homepage"}><Box sx={{ display: 'flex', alignItems: 'center' }}>
               <img
-                src={hero3}
+                src={logo}
                 alt='Nest'
-                style={{ height: '80px', width: '80px', marginRight: '8px' }}
+                style={{ width:'130px' ,  marginRight: '8px' }}
               />
-              <Typography variant='h6' noWrap sx={{ color: '#38a169' }}>
-                Shop Now
-              </Typography>
+             
             </Box></Link>
             )}
           </Box>

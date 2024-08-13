@@ -17,7 +17,7 @@ const TopCategories = () => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative mt-20">
       <div className='flex items-center justify-between'>
         <h2 className="text-2xl font-bold mb-4">Top Categories</h2>
         <div className='flex items-center text-white space-x-3'>
