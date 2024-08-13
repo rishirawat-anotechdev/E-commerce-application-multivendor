@@ -30,25 +30,25 @@ const NewsletterSubscription = () => {
       
       <div className="max-w-3xl mx-auto text-center relative z-10">
         <h2 className="text-4xl font-bold text-gray-800 mb-4">Subscribe our newsletter</h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-6 mx-2">
           Subscribe to the mailing list to receive updates on special offers, new arrivals and our promotions.
         </p>
-        <form onSubmit={handleSubmit} className="flex justify-center">
+        <div className="flex mx-auto bg-green-50 rounded-full w-[300px] md:w-[250px] border-green-400 hover:border-green-600  lg:w-[500px]">
           <input
             type="email"
             placeholder="Enter your email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="py-2 px-4 w-full max-w-md rounded-l-full border-2 border-green-500 focus:outline-none "
+            className="py-2 px-4 flex-grow w-full rounded-l-full border-2 focus:outline-green-500 "
             required
           />
           <button
             type="submit"
-            className="bg-green-500 text-white py-2 px-6 rounded-r-full hover:bg-green-600 transition duration-300"
+            className="bg-green-500 text-white py-2 px-6 rounded-r-full w-[100px] md:w-[80px] lg:w-[120px] hover:bg-green-600 transition duration-300"
           >
             Subscribe
           </button>
-        </form>
+      </div>
       </div>
     </div>
   );

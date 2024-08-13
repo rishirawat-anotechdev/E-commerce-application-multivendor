@@ -9,7 +9,7 @@ const App = () => {
     <Routes>
       {
         routeDefinitions.map(({path, element}, index) => (
-          <Route key={index} index path={path} element={<LayoutPage>{element}</LayoutPage>} />
+          <Route key={index}  path={path} element={<LayoutPage>{element}</LayoutPage>} />
         ))
       }
     </Routes>
