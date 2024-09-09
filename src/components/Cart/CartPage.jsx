@@ -120,6 +120,7 @@ const CartPage = () => {
             <Typography variant='body2' color='text.secondary' mb={2}>
               (Shipping fees not included)
             </Typography>
+            <Link to={'/checkout'}>
             <Button
               variant='contained'
               color='primary'
@@ -133,6 +134,8 @@ const CartPage = () => {
             >
               Proceed To Checkout
             </Button>
+            </Link>
+           
           </Paper>
 
           <Paper sx={{ padding: 2, marginTop: 2 }}>
@@ -165,7 +168,7 @@ const CartPage = () => {
         </Grid>
       </Grid>
 
-     <Link to={"/checkout"} >
+     <Link to={"/"} >
      <Button
         startIcon={<ArrowBackIcon />}
         sx={{

@@ -259,7 +259,7 @@ const HeaderPage = () => {
           </Box>
 
           {/* Search Bar */}
-          <div className='flex items-center bg-green-50 w-[300px] md:w-[200px] border-green-400 hover:border-green-600 border lg:w-[500px]  rounded'>
+          <div className='flex items-center bg-green-50 w-[300px] md:w-[200px] border-green-400 hover:border-green-600 border lg:w-[500px] '>
             <input
               type='search'
               className='flex-grow p-2 outline-none text-black '
