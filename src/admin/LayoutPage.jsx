@@ -110,18 +110,6 @@ const navLinks = [
     iconColor: '#16a085'
   }, // Teal
   {
-    text: 'Market Reports',
-    icon: <FaChartLine size={30} />,
-    link: '/admin/market-reports',
-    iconColor: '#2980b9'
-  }, // Blue
-  {
-    text: 'Stores',
-    icon: <MdStore size={30} />,
-    link: '/admin/stores',
-    iconColor: '#34495e'
-  }, // Gray-blue
-  {
     text: 'Vendors',
     icon: <MdStore size={30} />,
     link: '/admin/vendors',
@@ -136,15 +124,10 @@ const navLinks = [
   {
     text: 'Payment Methods',
     icon: <MdPayment size={30} />,
-    link: '/admin/payment-methods',
+    link: '/admin/payments',
     iconColor: '#2c3e50'
   }, // Dark blue
-  {
-    text: 'Contact',
-    icon: <FaClipboardList size={30} />,
-    link: '/admin/contact',
-    iconColor: '#1abc9c'
-  }, // Green
+ 
   {
     text: 'Settings',
     icon: <FaCog size={30} />,
@@ -184,7 +167,7 @@ const Layout = () => {
       <Box
         display={{ xs: 'flex', sm: 'none', justifyContent: 'center' }}
         alignItems='center'
-        sx={{ mb: 2, color: 'white', mt:2}}
+        sx={{ mb: 0, color: 'white', mt:5}}
       >
         <Avatar
           alt='Profile'
@@ -279,7 +262,7 @@ const Layout = () => {
               bgcolor: '#151f2c',
               borderRadius: '4px',
               border: '1px solid #fff',
-              mr: 1
+            
             }}
           >
             <SearchIcon
@@ -365,6 +348,7 @@ const Layout = () => {
         open={mobileOpen}
         onClose={handleDrawerToggle}
         sx={{
+          
           display: { xs: 'block', sm: 'none' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
@@ -388,11 +372,11 @@ const Layout = () => {
           backgroundColor: '#f6f8fb' ,
           width: { xs: '100%', sm: `calc(100vw - ${drawerWidth}px)` },
           maxWidth: { xs: '100%', sm: `calc(100vw - ${drawerWidth}px)` },
-          height: { xs: '100%', sm: `calc(100vh - 10vh)` },
-          maxHeight: { xs: '100%', sm: `calc(100vh- 10vh)` },
+          height: { xs: 'calc(100vh - 10vh)', sm: `calc(100vh - 10vh)` },
+          maxHeight: { xs: 'calc(100vh - 10vh)', sm: `calc(100vh- 10vh)` },
           overflowY: 'auto',
-          mt:8,
-          p:4
+          mt:{ xs:10 , sm:8 },
+          p: { xs:1 , sm:4 },
          
         }}
       >

@@ -13,12 +13,12 @@ import {
 
   TableHead,
   TableRow,
-
+  Paper,
   Grid,
   Typography,
   Chip,
   TablePagination,
-  Divider,
+
   TableContainer
 } from '@mui/material';
 
@@ -106,9 +106,9 @@ const OrderPage = () => {
 
 
   return (
-    <Box sx={{py: { xs: 1, sm: 2 } , mt: 2,backgroundColor: '#fff' }}>
+    <Box sx={{py: { xs: 1, sm: 2 } , mt: 2, }}>
       {/* Filter Box */}
-      <Box mb={4} p={3} sx={{  borderRadius: 2 }}>
+      <Box mb={4} p={3} sx={{  borderRadius: 2, backgroundColor: '#fff' }}>
         <Typography variant="h6" mb={2}>Filters</Typography>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={4}>
@@ -182,9 +182,9 @@ const OrderPage = () => {
           </Grid>
         </Grid>
       </Box>
-<Divider mt={2} />
+
       {/* Table */}
-      <TableContainer>
+      <TableContainer component={Paper} mt={2}>
       
         <Table>
           <TableHead>

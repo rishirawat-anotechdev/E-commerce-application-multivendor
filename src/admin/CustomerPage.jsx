@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Avatar, IconButton, TextField, Select, MenuItem, Pagination, Paper, Box, Typography, Chip,
-  Divider
+  Avatar, IconButton, TextField, Select, MenuItem, Paper, Box, Chip, TablePagination
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 
@@ -19,43 +18,41 @@ const usersData = [
 const CustomerPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleRowsPerPageChange = (event) => {
-    setRowsPerPage(event.target.value);
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to first page when changing rows per page
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
   };
 
   const filteredUsers = usersData.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handlePageChange = (event, value) => {
-    setPage(value);
-  };
-
-  const displayedUsers = filteredUsers.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const displayedUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2, backgroundColor: "white" }}>
-      <Box sx={{px:4}}>
-      <TextField
-      
-      label="Search by Username"
-      variant="outlined"
-      fullWidth
-      value={searchTerm}
-      onChange={handleSearch}
-      margin="normal"
-      
-   
-    />
+    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
+      <Box sx={{ p: 4, backgroundColor: 'white' }}>
+        <TextField
+          label="Search by Username"
+          variant="outlined"
+          fullWidth
+          value={searchTerm}
+          onChange={handleSearch}
+          margin="normal"
+        />
       </Box>
-      <Divider sx={{mt:4}}/>
-      <TableContainer >
+
+      <TableContainer component={Paper} sx={{ mt: 4 }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -77,7 +74,7 @@ const CustomerPage = () => {
                 <TableCell><a href={`/users/${user.id}`}>{user.name}</a></TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.createdAt}</TableCell>
-                <TableCell >
+                <TableCell>
                   <Chip
                     label={user.status}
                     color={user.status === 'Activated' ? 'primary' : 'secondary'}
@@ -85,14 +82,13 @@ const CustomerPage = () => {
                   />
                 </TableCell>
                 <TableCell>
-
-                <Chip
+                  <Chip
                     label={user.isVendor}
                     color={user.isVendor === 'Yes' ? 'primary' : 'secondary'}
                     size="small"
                   />
                 </TableCell>
-                <TableCell  sx={{ whiteSpace: 'nowrap' }}>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
                   <IconButton aria-label="edit" color="primary">
                     <Edit />
                   </IconButton>
@@ -104,25 +100,21 @@ const CustomerPage = () => {
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
-      <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
-        <Select
-          value={rowsPerPage}
-          onChange={handleRowsPerPageChange}
-          displayEmpty
-          inputProps={{ 'aria-label': 'Rows per page' }}
-        >
-          <MenuItem value={5}>5</MenuItem>
-          <MenuItem value={10}>10</MenuItem>
-          <MenuItem value={12}>12</MenuItem>
-        </Select>
-        <Pagination
-          count={Math.ceil(filteredUsers.length / rowsPerPage)}
+        </TableContainer>
+        <TablePagination
+          component="div"
+          count={filteredUsers.length}
           page={page}
-          onChange={handlePageChange}
-          color="primary"
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25]}
+          labelRowsPerPage="Records per page"
+          labelDisplayedRows={({ from, to, count }) =>
+            `Showing from ${from} to ${to} of ${count !== -1 ? count : `more than ${to}`}`
+          }
         />
-      </Box>
+    
     </Box>
   );
 };

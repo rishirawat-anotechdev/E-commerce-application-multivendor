@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  IconButton, TextField,  Box, Divider , TablePagination
+  IconButton, TextField,  Box, Divider , TablePagination,
+  Paper
 } from '@mui/material';
 import { Delete, Visibility } from '@mui/icons-material';
 import Rating from '@mui/material/Rating';
@@ -13,7 +14,7 @@ const reviewsData = [
     user: { name: 'Adela Rowe PhD', link: '/users/1' },
     star: 3,
     comment: 'As a developer I reviewed this script. This is really awesome ecommerce...',
-    images: ['img1.jpg', 'img2.jpg'],
+    images: ['img1.jpg'],
     status: 'Published',
     createdAt: '2024-07-22'
   },
@@ -23,7 +24,7 @@ const reviewsData = [
     user: { name: 'Mae West', link: '/users/2' },
     star: 4,
     comment: 'Cool template. Excellent code quality. The support responds very quick...',
-    images: ['img3.jpg', 'img4.jpg'],
+    images: ['img3.jpg'],
     status: 'Published',
     createdAt: '2024-07-22'
   },
@@ -55,9 +56,9 @@ const ReviewsPage = () => {
   const displayedReviews = filteredReviews.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Box  sx={{ py: { xs: 1, sm: 2 }, mt: 2, backgroundColor:"white"  }}>
+    <Box  sx={{ py: { xs: 1, sm: 2 }, mt: 2,   }}>
      
-     <Box sx={{px:2, mt:2}}>
+     <Box sx={{p:4, backgroundColor:"white"}}>
      <TextField
         label="Search by Username"
         variant="outlined"
@@ -67,8 +68,8 @@ const ReviewsPage = () => {
         margin="normal"
       />
      </Box>
-      <Divider sx={{mt:2}} />
-      <TableContainer >
+   
+      <TableContainer component={Paper} sx={{mt:4}} >
         <Table>
           <TableHead>
             <TableRow>

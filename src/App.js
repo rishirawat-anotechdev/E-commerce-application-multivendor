@@ -15,6 +15,11 @@ import BrandsPage from './admin/BrandsPage';
 import ReviewsPage from './admin/ReviewsPage';
 import CustomerPage from './admin/CustomerPage';
 import DiscountPage from './admin/DiscountPage';
+import VendorsPage from './admin/VendorsPage';
+import TransactionsPage from './admin/TransactionPage';
+import PaymentMethods from './admin/PaymentMethod';
+import SettingsPage from './admin/SettingsPage';
+import ProductInfo from './admin/ProductInfo';
 
 
 
@@ -38,6 +43,11 @@ const App = () => {
       <Route path='reviews' element={<ReviewsPage />} />
       <Route path='customers' element={<CustomerPage />} />
       <Route path='discounts' element={<DiscountPage />} />
+      <Route path='vendors' element={<VendorsPage />} />
+      <Route path='transactions' element={<TransactionsPage />} />
+      <Route path='payments' element={<PaymentMethods />} />
+      <Route path='settings' element={<SettingsPage />} />
+      <Route path='product-info' element={<ProductInfo />} />
       </Route>
      
   

@@ -13,7 +13,8 @@ import {
   InputAdornment,
   Button,
   IconButton,
-  Divider
+  Divider,
+  Paper
 } from '@mui/material'
 import { Search, Edit, Delete } from '@mui/icons-material'
 
@@ -93,10 +94,10 @@ function BrandsPage () {
   )
 
   return (
-    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2, backgroundColor: 'white' }}>
+    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2,  }}>
       {/* Search Bar */}
       <Box
-        sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, px: 4 }}
+        sx={{ display: 'flex', justifyContent: 'space-between', p: 4,  backgroundColor: '#fff' }}
       >
         <TextField
           variant='outlined'
@@ -116,9 +117,9 @@ function BrandsPage () {
           <Button variant='contained'>Create</Button>
         </Box>
       </Box>
-      <Divider sx={{ mt: 2 }} />
+     
       {/* Table */}
-      <TableContainer>
+      <TableContainer component={Paper} sx={{ mt:4  }} >
         <Table>
           <TableHead>
             <TableRow>
