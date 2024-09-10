@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Avatar, IconButton, TextField, Select, MenuItem, Pagination, Paper, Box, Typography, Chip
+  Avatar, IconButton, TextField, Select, MenuItem, Pagination, Paper, Box, Typography, Chip,
+  Divider
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 
@@ -53,7 +54,8 @@ const CustomerPage = () => {
    
     />
       </Box>
-      <TableContainer sx={{mt:4}}>
+      <Divider sx={{mt:4}}/>
+      <TableContainer >
         <Table>
           <TableHead>
             <TableRow>
@@ -69,13 +71,13 @@ const CustomerPage = () => {
           </TableHead>
           <TableBody>
             {displayedUsers.map((user, index) => (
-              <TableRow key={user.id} sx={{ backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff' }}>
+              <TableRow key={user.id} style={{ backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white' }}>
                 <TableCell>{user.id}</TableCell>
                 <TableCell><Avatar src={user.avatar} alt={user.name} /></TableCell>
                 <TableCell><a href={`/users/${user.id}`}>{user.name}</a></TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.createdAt}</TableCell>
-                <TableCell>
+                <TableCell >
                   <Chip
                     label={user.status}
                     color={user.status === 'Activated' ? 'primary' : 'secondary'}
@@ -90,7 +92,7 @@ const CustomerPage = () => {
                     size="small"
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell  sx={{ whiteSpace: 'nowrap' }}>
                   <IconButton aria-label="edit" color="primary">
                     <Edit />
                   </IconButton>

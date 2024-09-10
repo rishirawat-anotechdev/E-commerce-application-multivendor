@@ -14,6 +14,7 @@ import CategoryPage from './admin/CategoryPage';
 import BrandsPage from './admin/BrandsPage';
 import ReviewsPage from './admin/ReviewsPage';
 import CustomerPage from './admin/CustomerPage';
+import DiscountPage from './admin/DiscountPage';
 
 
 
@@ -36,6 +37,7 @@ const App = () => {
       <Route path='brands' element={<BrandsPage />} />
       <Route path='reviews' element={<ReviewsPage />} />
       <Route path='customers' element={<CustomerPage />} />
+      <Route path='discounts' element={<DiscountPage />} />
       </Route>
      
   

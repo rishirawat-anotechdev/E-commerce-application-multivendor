@@ -5,7 +5,7 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 import PeopleIcon from '@mui/icons-material/People'
 import StorageIcon from '@mui/icons-material/Storage'
-import { Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableSortLabel,  Button, TextField, Chip } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableSortLabel,   TextField, Chip,Divider } from '@mui/material';
   
   import { Line } from 'react-chartjs-2'
 import { Pie } from 'react-chartjs-2'
@@ -270,15 +270,18 @@ const ReportPage = () => {
       </Box>
 
       <Paper  elevation={3} sx={{mt:4}}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom sx={{p:2}}>
         Recent Orders
       </Typography>
+      <Box sx={{px:4}}>
       <TextField
         fullWidth
         size="small"
         label="Search"
-        sx={{ marginBottom: '20px', mx:4 }}
+        sx={{ marginBottom: '20px',  }}
       />
+      </Box>
+      <Divider sx={{mt:4}}/>
       <TableContainer>
         <Table>
           <TableHead>

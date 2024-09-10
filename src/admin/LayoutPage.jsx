@@ -100,7 +100,7 @@ const navLinks = [
   {
     text: 'Discounts',
     icon: <FaTags size={30} />,
-    link: '/admin/discount',
+    link: '/admin/discounts',
     iconColor: '#e74c3c'
   }, // Red
   {

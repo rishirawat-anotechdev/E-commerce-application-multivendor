@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  TextField, IconButton, InputAdornment, Box, Button
+  TextField, IconButton, InputAdornment, Box, Button,Divider
 } from '@mui/material';
 import { Edit, Delete, Search, Save } from '@mui/icons-material';
 
@@ -77,11 +77,11 @@ const ProductPrice = () => {
   };
 
   return (
-    <Box sx={{ padding: { xs: 1, sm: 2 }, mt: 8  }}>
+    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2, backgroundColor:"#fff"  }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', }}>
         <TextField
           fullWidth
-          label="Search"
+          label="Search by product name"
           variant="outlined"
           size="small"
           InputProps={{
@@ -97,8 +97,9 @@ const ProductPrice = () => {
         </Button>
       </Box>
 
-    
-        <Table>
+    <Divider sx={{mt:2}}/>
+       <TableContainer>
+       <Table>
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
@@ -202,6 +203,7 @@ const ProductPrice = () => {
 </TableBody>
 
         </Table>
+       </TableContainer>
    
     </Box>
   );

@@ -10,14 +10,16 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
+
   TableHead,
   TableRow,
-  Paper,
+
   Grid,
   Typography,
   Chip,
   TablePagination,
+  Divider,
+  TableContainer
 } from '@mui/material';
 
 // Fake Data
@@ -104,9 +106,9 @@ const OrderPage = () => {
 
 
   return (
-    <Box sx={{padding: { xs: 1, sm: 2 } , mt: 2 }}>
+    <Box sx={{py: { xs: 1, sm: 2 } , mt: 2,backgroundColor: '#fff' }}>
       {/* Filter Box */}
-      <Box mb={4} p={3} sx={{ backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+      <Box mb={4} p={3} sx={{  borderRadius: 2 }}>
         <Typography variant="h6" mb={2}>Filters</Typography>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={4}>
@@ -180,9 +182,9 @@ const OrderPage = () => {
           </Grid>
         </Grid>
       </Box>
-
+<Divider mt={2} />
       {/* Table */}
-      <Box mb={2}>
+      <TableContainer>
       
         <Table>
           <TableHead>
@@ -214,8 +216,8 @@ const OrderPage = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredRows.map((row) => (
-              <TableRow key={row.id} style={{ backgroundColor: row.id % 2 === 0 ? '#f6f8fb' : 'white' }}>
+            {filteredRows.map((row, index) => (
+              <TableRow key={row.id} style={{ backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white' }}>
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{row.name}</TableCell>
                 <TableCell>{row.email}</TableCell>
@@ -228,6 +230,7 @@ const OrderPage = () => {
             ))}
           </TableBody>
         </Table>
+      </TableContainer>
      
 
       {/* Pagination Component */}
@@ -243,7 +246,7 @@ const OrderPage = () => {
         labelDisplayedRows={({ from, to, count }) => `Showing from ${from} to ${to} of ${count}`}
       />
     </Box>
-    </Box>
+ 
   );
 };
 

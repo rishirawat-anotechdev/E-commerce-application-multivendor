@@ -4,7 +4,8 @@ import {
   Typography, MenuItem, Select, InputLabel, FormControl,
   Grid,
   Button,
-  Modal
+  Modal,
+  Divider
 } from '@mui/material';
 import { Edit, Delete, Search as SearchIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -116,7 +117,7 @@ const ProductPage = () => {
   };
 
   return (
-    <Box sx={{ padding: { xs: 1, sm: 2 }, mt: 2  }}>
+    <Box sx={{ padding: { xs: 1, sm: 2 }, mt: 2, backgroundColor:"#fff"  }}>
       
       <Grid container spacing={2} alignItems="center" marginBottom={4}>
         <Grid item xs={12} sm={8}>
@@ -226,6 +227,7 @@ const ProductPage = () => {
         </Box>
       </Modal>
       </LocalizationProvider>
+      <Divider sx={{mt:2}} />
       <TableContainer >
         <Table>
           <TableHead>

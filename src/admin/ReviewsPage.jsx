@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Container, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  IconButton, TextField, Paper, Box, Typography, TablePagination
+   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  IconButton, TextField,  Box, Divider , TablePagination
 } from '@mui/material';
 import { Delete, Visibility } from '@mui/icons-material';
 import Rating from '@mui/material/Rating';
@@ -57,7 +57,8 @@ const ReviewsPage = () => {
   return (
     <Box  sx={{ py: { xs: 1, sm: 2 }, mt: 2, backgroundColor:"white"  }}>
      
-      <TextField
+     <Box sx={{px:2, mt:2}}>
+     <TextField
         label="Search by Username"
         variant="outlined"
         fullWidth
@@ -65,7 +66,9 @@ const ReviewsPage = () => {
         onChange={handleSearch}
         margin="normal"
       />
-      <TableContainer sx={{mt:4}}>
+     </Box>
+      <Divider sx={{mt:2}} />
+      <TableContainer >
         <Table>
           <TableHead>
             <TableRow>
@@ -82,7 +85,7 @@ const ReviewsPage = () => {
           </TableHead>
           <TableBody>
             {displayedReviews.map((review) => (
-              <TableRow key={review.id}>
+              <TableRow key={review.id} style={{ backgroundColor: review.id % 2 === 0 ? '#f6f8fb' : 'white' }}>
                 <TableCell>{review.id}</TableCell>
                 <TableCell>
                   <a href={review.product.link}>{review.product.name}</a>
