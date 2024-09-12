@@ -164,7 +164,7 @@ const ShipmentPage = () => {
                   </TableCell>
                   <TableCell>{order.codStatus}</TableCell>
                   <TableCell>{order.createdAt}</TableCell>
-                  <TableCell>
+                  <TableCell sx={{whiteSpace:"nowrap"}}>
                     <IconButton color='primary'>
                       <Edit />
                     </IconButton>

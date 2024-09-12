@@ -44,7 +44,7 @@ const ProductInfo = () => {
           gap:3,
           maxWidth: '100%',
           margin: 'auto',
-          padding: { xs: 1, sm: 2 },
+          py: { xs: 1, sm: 2 },
           mt: 2
         }}
       >

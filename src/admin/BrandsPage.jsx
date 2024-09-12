@@ -150,7 +150,7 @@ function BrandsPage () {
                   <TableCell>
                     <Chip label={row.status} color='success' />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{whiteSpace:"nowrap"}}>
                     <IconButton color='primary'>
                       <Edit />
                     </IconButton>

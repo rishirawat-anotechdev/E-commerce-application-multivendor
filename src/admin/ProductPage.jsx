@@ -206,7 +206,7 @@ const ProductPage = () => {
   }
 
   return (
-    <Box sx={{ padding: { xs: 1, sm: 2 }, mt: 2 }}>
+    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
       <Grid
         container
         alignItems='center'
@@ -214,14 +214,24 @@ const ProductPage = () => {
         sx={{ backgroundColor: '#fff', p: 4, gap: 2 }}
       >
         {/* Responsive Search Bar */}
-        <Grid item xs={12} sm={8} md={9} lg={10}>
-          <TextField
-            label='Search by Product Name'
-            variant='outlined'
-            fullWidth
-            value={filter.text}
-            onChange={e => handleFilterChange('text', e.target.value)}
-          />
+        <Grid container spacing={2} alignItems='center'>
+          <Grid item xs={12} sm={8} md={9} lg={10}>
+            <TextField
+              label='Search by Product Name'
+              variant='outlined'
+              fullWidth
+              value={filter.text}
+              onChange={e => handleFilterChange('text', e.target.value)}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4} md={3} lg={2}>
+            <Link to={'/admin/product-add'}>
+              <Button variant='contained' color='primary' fullWidth>
+                Create
+              </Button>
+            </Link>
+          </Grid>
         </Grid>
 
         {/* Responsive Filter Button */}
@@ -244,7 +254,9 @@ const ProductPage = () => {
             onClick={handleOpen}
           >
             <FilterListIcon sx={{ mr: 1 }} />
-            <Typography variant='body2' sx={{whiteSpace:"nowrap"}}>Advanced Filter</Typography>
+            <Typography variant='body2' sx={{ whiteSpace: 'nowrap' }}>
+              Advanced Filter
+            </Typography>
           </Box>
         </Grid>
       </Grid>
@@ -401,17 +413,20 @@ const ProductPage = () => {
               >
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{row.image}</TableCell>
-                <TableCell sx={{cursor:"pointer"}}>
-  <Link to={`/admin/product-info/${row.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-    {row.product}
-  </Link>
-  </TableCell>
+                <TableCell sx={{ cursor: 'pointer' }}>
+                  <Link
+                    to={`/admin/product-info/${row.id}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    {row.product}
+                  </Link>
+                </TableCell>
                 <TableCell>${row.price.toFixed(2)}</TableCell>
                 <TableCell>{row.stockStatus}</TableCell>
                 <TableCell>{row.quantity}</TableCell>
                 <TableCell>{row.sku}</TableCell>
                 <TableCell>{row.createdAt}</TableCell>
-                <TableCell>
+                <TableCell sx={{whiteSpace:"nowrap"}}>
                   <IconButton color='primary'>
                     <Edit />
                   </IconButton>

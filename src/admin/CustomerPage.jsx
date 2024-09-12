@@ -71,7 +71,7 @@ const CustomerPage = () => {
               <TableRow key={user.id} style={{ backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white' }}>
                 <TableCell>{user.id}</TableCell>
                 <TableCell><Avatar src={user.avatar} alt={user.name} /></TableCell>
-                <TableCell><a href={`/users/${user.id}`}>{user.name}</a></TableCell>
+                <TableCell><a href={`/admin/customer-profile/${user.id}`}>{user.name}</a></TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.createdAt}</TableCell>
                 <TableCell>

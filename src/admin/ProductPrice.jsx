@@ -4,6 +4,7 @@ import {
   TextField, IconButton, InputAdornment, Box, Button
 } from '@mui/material';
 import { Edit, Delete, Search, Save } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
 
 const initialData = [
   {
@@ -76,8 +77,10 @@ const ProductPrice = () => {
             ),
           }}
         />
-        <Button variant="contained" color="primary" sx={{ whiteSpace: 'nowrap', px: 6, ml: 4 }}>
+      <Button variant="contained" color="primary" sx={{ whiteSpace: 'nowrap', px: 6, ml: 4 }}>
+      <Link to={'/admin/product-add'}> 
           Add New Product
+          </Link>
         </Button>
       </Box>
 
@@ -128,7 +131,7 @@ const ProductPrice = () => {
                     disabled={editingRow !== row.id}
                   />
                 </TableCell>
-                <TableCell >
+                <TableCell sx={{whiteSpace:"nowrap"}}>
                   {editingRow === row.id ? (
                     <IconButton color="primary" onClick={handleSaveRow}>
                       <Save />

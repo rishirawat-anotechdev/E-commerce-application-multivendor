@@ -20,6 +20,9 @@ import TransactionsPage from './admin/TransactionPage';
 import PaymentMethods from './admin/PaymentMethod';
 import SettingsPage from './admin/SettingsPage';
 import ProductInfo from './admin/ProductInfo';
+import CustomerProfile from './admin/CustomerProfile';
+import VendorProfile from './admin/VendorProfile';
+import AdminProfile from './admin/AdminProfile';
 
 
 
@@ -47,7 +50,11 @@ const App = () => {
       <Route path='transactions' element={<TransactionsPage />} />
       <Route path='payments' element={<PaymentMethods />} />
       <Route path='settings' element={<SettingsPage />} />
-      <Route path='product-info' element={<ProductInfo />} />
+      <Route path='product-info/:id' element={<ProductInfo />} />
+      <Route path='product-add' element={<ProductInfo />} />
+      <Route path='customer-profile/:id' element={<CustomerProfile />} />
+      <Route path='vendor-profile' element={<VendorProfile />} />
+      <Route path='admin-profile' element={<AdminProfile />} />
       </Route>
      
   

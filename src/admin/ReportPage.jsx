@@ -143,7 +143,7 @@ const ReportPage = () => {
   
   return (
 
-      <Box sx={{ padding: { xs: 1, sm: 2 }, mt:2 }}>
+      <Box sx={{ py: { xs: 1, sm: 2 }, mt:2 }}>
         <Grid container spacing={2}>
           {statsData.map((stat, index) => (
             <Grid

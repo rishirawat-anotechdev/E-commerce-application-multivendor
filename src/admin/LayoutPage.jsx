@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   AppBar,
   Toolbar,
@@ -38,9 +38,8 @@ import {
   FaBell
 } from 'react-icons/fa'
 
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Link, Outlet, useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.png'
-
 
 const navLinks = [
   {
@@ -127,7 +126,7 @@ const navLinks = [
     link: '/admin/payments',
     iconColor: '#2c3e50'
   }, // Dark blue
- 
+
   {
     text: 'Settings',
     icon: <FaCog size={30} />,
@@ -136,16 +135,13 @@ const navLinks = [
   } // Green
 ]
 
-
-
 const Layout = () => {
-  
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedIndex, setSelectedIndex] = useState(null)
-
-  const drawerWidth = sidebarOpen ? 270 : 100
+  const [currentRoute, setCurrentRoute] = useState('Dashboard')
+  const drawerWidth = sidebarOpen ? 270 : 80
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -156,33 +152,35 @@ const Layout = () => {
   }
 
   const handleListItemClick = (index, link) => {
-    setSelectedIndex(index);
-    navigate(link); // Use navigate to route to the appropriate page
-  };
+    setSelectedIndex(index)
+    navigate(link) // Use navigate to route to the appropriate page
+  }
 
   const drawer = (
     <div>
       <Toolbar />
       {/* Profile section for mobile screens */}
-      <Box
-        display={{ xs: 'flex', sm: 'none', justifyContent: 'center' }}
-        alignItems='center'
-        sx={{ mb: 0, color: 'white', mt:5}}
-      >
-        <Avatar
-          alt='Profile'
-          src='/path-to-image.jpg'
-          sx={{ width: 40, height: 40, mr: 2 }}
-        />
-        <Box display={{ xs: 'flex', sm: 'none' }} flexDirection='column'>
-          <Typography variant='body1' sx={{ mt: 1 }}>
-            Linda Bashirian
-          </Typography>
-          <Typography variant='body2'>linda@example.com</Typography>
+      <Link to={'/admin/admin-profile'}>
+        <Box
+          display={{ xs: 'flex', sm: 'none', justifyContent: 'center' }}
+          alignItems='center'
+          sx={{ mb: 0, color: 'white', mt: 5 }}
+        >
+          <Avatar
+            alt='Profile'
+            src='/path-to-image.jpg'
+            sx={{ width: 40, height: 40, mr: 2 }}
+          />
+          <Box display={{ xs: 'flex', sm: 'none' }} flexDirection='column'>
+            <Typography variant='body1' sx={{ mt: 1 }}>
+              Linda Bashirian
+            </Typography>
+            <Typography variant='body2'>linda@example.com</Typography>
+          </Box>
         </Box>
-      </Box>
-      <Divider/>
-      <List sx={{overflowX:'none', mt:2}}>
+      </Link>
+      <Divider />
+      <List sx={{ overflowX: 'none', mt: 2 }}>
         {navLinks.map((link, index) => (
           <ListItem
             button
@@ -191,11 +189,10 @@ const Layout = () => {
             onClick={() => handleListItemClick(index, link.link)}
             sx={{
               color: 'white',
-              mt:1,
+              mt: 1,
               backgroundColor: selectedIndex === index ? '#206bc4' : 'inherit',
               '&:hover': {
-                backgroundColor: '#206bc4',
-            
+                backgroundColor: '#206bc4'
               }
             }}
           >
@@ -222,6 +219,22 @@ const Layout = () => {
     </div>
   )
 
+ // Routing logic
+useEffect(() => {
+  // Get the current path and replace '/admin/' with 'admin / '
+  let path = window.location.pathname.replace('/admin/', 'admin / ');
+
+  // Remove hyphens and replace them with spaces
+  path = path.replace(/-/g, ' ');
+
+  // Convert the path to uppercase
+  const uppercaseRoute = path.charAt(0).toUpperCase() + path.slice(1).toUpperCase();
+
+  // If no specific route, default to 'DASHBOARD'
+  setCurrentRoute(uppercaseRoute || 'DASHBOARD');
+}, [window.location.pathname]);
+
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -229,7 +242,7 @@ const Layout = () => {
         position='fixed'
         sx={{ zIndex: theme => theme.zIndex.drawer + 1, bgcolor: '#182433' }}
       >
-        <Toolbar sx={{height:"10vh"}}>
+        <Toolbar sx={{ height: '10vh' }}>
           <IconButton
             color='inherit'
             aria-label='open drawer'
@@ -261,8 +274,7 @@ const Layout = () => {
               position: 'relative',
               bgcolor: '#151f2c',
               borderRadius: '4px',
-              border: '1px solid #fff',
-            
+              border: '1px solid #fff'
             }}
           >
             <SearchIcon
@@ -304,51 +316,62 @@ const Layout = () => {
             />
           </Badge>
           {/* Hide profile on small screens */}
-          <Box
-            display={{ xs: 'none', sm: 'flex' }}
-            alignItems='center'
-            sx={{ ml: 2, color: 'white' }}
-          >
-            <Avatar alt='Profile' src='/path-to-image.jpg' />
-            <Box ml={2}>
-              <Typography variant='body1'>Linda Bashirian</Typography>
-              <Typography variant='body2'>linda@example.com</Typography>
+          <Link to={'/admin/admin-profile'}>
+            <Box
+              display={{ xs: 'none', sm: 'flex' }}
+              alignItems='center'
+              sx={{ ml: 2, color: 'white' }}
+            >
+              <Avatar alt='Profile' src='/path-to-image.jpg' />
+              <Box ml={2}>
+                <Typography variant='body1'>Linda Bashirian</Typography>
+                <Typography variant='body2'>linda@example.com</Typography>
+              </Box>
             </Box>
-          </Box>
+          </Link>
         </Toolbar>
       </AppBar>
       <Drawer
-        variant='permanent'
-        sx={{
-       
-          width: drawerWidth ,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
-            width:  drawerWidth ,
-            boxSizing: 'border-box',
-            transition: 'width 0.3s ease',
-            bgcolor: '#2e3847',
-            color: 'white'
+    variant='permanent'
+    sx={{
+      width: drawerWidth,
+      flexShrink: 0,
+      [`& .MuiDrawer-paper`]: {
+        width: drawerWidth,
+        boxSizing: 'border-box',
+        transition: 'width 0.3s ease',
+        bgcolor: '#2e3847',
+        color: 'white',
+        overflowX: 'hidden', // Prevent horizontal scrolling
+        overflowY: 'auto', // Allow vertical scrolling
+        scrollbarWidth: 'thin', // For Firefox
+        scrollbarColor: '#888 transparent', // For Firefox
+        '&::-webkit-scrollbar': {
+          width: '2px', // Thicker scrollbar
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#888',
+          borderRadius: '4px',
+          '&:hover': {
+            background: '#555',
           },
-          display: { xs: 'none', sm: 'block' },
-          overflowX: 'none',
-          overflowY: 'auto',
-            '&::-webkit-scrollbar': {
-              width: '0px'
-            },
-            '-ms-overflow-style': 'none',
-            'scrollbar-width': 'none'
-        }}
-        open
-      >
-        {drawer}
-      </Drawer>
+        },
+      },
+      display: { xs: 'none', sm: 'block' },
+    }}
+    open
+  >
+    {drawer}
+  </Drawer>
+
       <Drawer
         variant='temporary'
         open={mobileOpen}
         onClose={handleDrawerToggle}
         sx={{
-          
           display: { xs: 'block', sm: 'none' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
@@ -369,17 +392,30 @@ const Layout = () => {
       <Box
         component='main'
         sx={{
-          backgroundColor: '#f6f8fb' ,
+          backgroundColor: '#f6f8fb',
           width: { xs: '100%', sm: `calc(100vw - ${drawerWidth}px)` },
           maxWidth: { xs: '100%', sm: `calc(100vw - ${drawerWidth}px)` },
           height: { xs: 'calc(100vh - 10vh)', sm: `calc(100vh - 10vh)` },
           maxHeight: { xs: 'calc(100vh - 10vh)', sm: `calc(100vh- 10vh)` },
           overflowY: 'auto',
-          mt:{ xs:10 , sm:8 },
-          p: { xs:1 , sm:4 },
-         
+          mt: { xs: 12, sm: 10 },
+          p: { xs: 1, sm: 2 }
         }}
       >
+        <Typography
+          variant='h6'
+          sx={{
+            mb: 2,
+            fontSize: {
+              xs: '1rem', // small screen
+              sm: '1.25rem', // small to medium screen
+              md: '1.5rem', // medium screen
+              lg: '2rem' // large screen
+            }
+          }}
+        >
+          {currentRoute}
+        </Typography>
         <Outlet />
       </Box>
     </Box>
