@@ -96,7 +96,7 @@ const fakeData = [
   }
 ]
 
-const ProductPage = () => {
+const VendorProducts = () => {
   const [rows, setRows] = useState(fakeData)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(5)
@@ -253,7 +253,7 @@ const ProductPage = () => {
             }}
             onClick={handleOpen}
           >
-            <FilterListIcon sx={{ mr: 1  }} />
+            <FilterListIcon sx={{ mr: 1 }} />
             <Typography variant='body2' sx={{ whiteSpace: 'nowrap', fontSize:"1.3rem" }}>
               Advanced Filter
             </Typography>
@@ -415,7 +415,7 @@ const ProductPage = () => {
                 <TableCell>{row.image}</TableCell>
                 <TableCell sx={{ cursor: 'pointer' }}>
                   <Link
-                    to={`/admin/product-info/:${row.id}`}
+                    to={`/vendor/products-info/${row.id}`}
                     style={{ textDecoration: 'none', color: 'inherit' }}
                   >
                     {row.product}
@@ -428,7 +428,7 @@ const ProductPage = () => {
                 <TableCell>{row.createdAt}</TableCell>
                 <TableCell sx={{whiteSpace:"nowrap"}}>
                   <IconButton color='primary'>
-                    <Link to={'/admin/product-info/:id'}>
+                    <Link to={'/vendor/products-info/:id'}>
                     <Edit />
                     </Link>
                    
@@ -458,4 +458,4 @@ const ProductPage = () => {
   )
 }
 
-export default ProductPage
+export default VendorProducts

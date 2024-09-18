@@ -17,6 +17,7 @@ import {
   Paper
 } from '@mui/material'
 import { Search, Edit, Delete } from '@mui/icons-material'
+import { Link } from 'react-router-dom'
 
 // Fake data for the table
 const rows = [
@@ -114,7 +115,10 @@ function BrandsPage () {
           }}
         />
         <Box>
+          <Link to={'/admin/product-info/:id'}>
           <Button variant='contained'>Create</Button>
+          </Link>
+         
         </Box>
       </Box>
      
@@ -152,7 +156,9 @@ function BrandsPage () {
                   </TableCell>
                   <TableCell sx={{whiteSpace:"nowrap"}}>
                     <IconButton color='primary'>
-                      <Edit />
+                 <Link to={'/admin/product-info/:id'}>
+                 <Edit />
+                 </Link>
                     </IconButton>
                     <IconButton color='error'>
                       <Delete />

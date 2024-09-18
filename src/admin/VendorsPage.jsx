@@ -157,7 +157,9 @@ const VendorsPage = () => {
                   <TableCell>{row.store}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     <IconButton color='primary'>
+                      <Link to={'/admin/vendor-profile'}>
                       <EditIcon />
+                      </Link>
                     </IconButton>
                     <IconButton color='error'>
                       <DeleteIcon />

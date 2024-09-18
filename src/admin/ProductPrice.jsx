@@ -138,7 +138,9 @@ const ProductPrice = () => {
                     </IconButton>
                   ) : (
                     <IconButton color="primary" onClick={() => handleEditRow(row.id)}>
-                      <Edit />
+                
+                  <Edit />
+               
                     </IconButton>
                   )}
                   <IconButton color="secondary" onClick={() => handleDeleteRow(row.id)}>

@@ -4,6 +4,7 @@ import {
   Avatar, IconButton, TextField, Select, MenuItem, Paper, Box, Chip, TablePagination
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
 
 const usersData = [
   { id: 10, avatar: 'user1.jpg', name: 'Kaleigh Sporer', email: 'ursula.moore@example.org', createdAt: '2024-07-22', status: 'Activated', isVendor: 'No' },
@@ -90,7 +91,9 @@ const CustomerPage = () => {
                 </TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap' }}>
                   <IconButton aria-label="edit" color="primary">
-                    <Edit />
+                 <Link to={'/admin/customer-profile/:id'}>
+                 <Edit />
+                 </Link>
                   </IconButton>
                   <IconButton aria-label="delete" color="error">
                     <Delete />
