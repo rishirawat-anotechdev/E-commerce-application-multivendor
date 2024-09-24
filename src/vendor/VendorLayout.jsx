@@ -15,7 +15,7 @@ import {
   Badge
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
-
+import '../index.css'
 // Import icons from react-icons
 import { MdDashboard, MdShoppingCart, MdStore, MdArticle } from 'react-icons/md'
 import { FaTags, FaCog, FaCommentAlt, FaBell } from 'react-icons/fa'
@@ -69,7 +69,7 @@ const navLinks = [
   {
     text: 'Settings',
     icon: <FaCog size={30} />,
-    link: '/vendor/settings',
+    link: '/vendor/setting',
     iconColor: '#2ecc71'
   } // Green
 ]
@@ -80,7 +80,7 @@ const VendorLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [currentRoute, setCurrentRoute] = useState('Dashboard')
-  const drawerWidth = sidebarOpen ? 400 : 0
+  const drawerWidth = sidebarOpen ? 380 : 0
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -129,14 +129,19 @@ const VendorLayout = () => {
               fontSize: '1.3rem'
             }}
           >
-            <Link to={'/vendor/vendor-profile'}>Hello, Linda Bashirian</Link>
+            <Link to={'/vendor/profile'}>Hello, Linda Bashirian</Link>
           </Typography>
           <Typography variant='body2' sx={{ color: 'black', fontSize: '1rem' }}>
             Joined on Sep 15, 2024
           </Typography>
           <Typography
             variant='body2'
-            sx={{ color: '#206bc4', my: 2, fontSize: '1rem', cursor:"pointer" }}
+            sx={{
+              color: '#206bc4',
+              my: 2,
+              fontSize: '1rem',
+              cursor: 'pointer'
+            }}
           >
             <AddBusinessIcon /> View your store
           </Typography>
@@ -162,7 +167,8 @@ const VendorLayout = () => {
               mt: 1,
               backgroundColor: selectedIndex === index ? '#206bc4' : 'inherit',
               '&:hover': {
-                backgroundColor: '#206bc4'
+                backgroundColor: '#206bc4',
+                color:"#fff"
               }
             }}
           >
@@ -179,7 +185,8 @@ const VendorLayout = () => {
                   color: 'black',
                   fontSize: { xs: '16px', sm: '20px' },
                   fontWeight: 'bold',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                
                 }}
               />
             )}
@@ -208,6 +215,63 @@ const VendorLayout = () => {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
+      {/* Header for vendor  */}
+
+      <AppBar
+        position='fixed'
+        sx={{ zIndex: theme => theme.zIndex.drawer + 1, bgcolor: '#182433' }}
+      >
+        <Toolbar sx={{ height: '10vh' }}>
+          <IconButton
+            color='inherit'
+            aria-label='open drawer'
+            edge='start'
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <IconButton
+            color='inherit'
+            aria-label='toggle sidebar'
+            edge='start'
+            onClick={handleSidebarToggle}
+            sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}
+          >
+            {sidebarOpen ? <MenuIcon /> : <MenuIcon />}
+          </IconButton>
+          <img
+            src={logo}
+            alt='Logo'
+            style={{ width: '110px', marginRight: '10px' }}
+          />
+          <Box sx={{ flexGrow: 1 }} />
+
+          <Badge
+            badgeContent={5}
+            color='secondary'
+            sx={{
+              '& .MuiBadge-badge': {
+                backgroundColor: '#f44336', // Custom badge color
+                color: 'white'
+                // Badge text color
+              }
+            }}
+          >
+            <FaBell
+              size={28}
+              style={{ color: 'white', cursor: 'pointer', mx: 2 }}
+            />
+          </Badge>
+          {/* Hide profile on small screens */}
+
+          <Box ml={2}>
+            <Typography variant='body1' sx={{ cursor: 'pointer' }}>
+              Go to home page <ArrowForwardIosIcon />{' '}
+            </Typography>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
       <Drawer
         variant='permanent'
@@ -269,6 +333,7 @@ const VendorLayout = () => {
       </Drawer>
       <Box
         component='main'
+        className='scrollbar-hide'
         sx={{
           backgroundColor: '#f6f8fb',
           width: { xs: '100%', sm: `calc(100vw - ${drawerWidth}px)` },
@@ -277,67 +342,14 @@ const VendorLayout = () => {
           maxHeight: { xs: 'calc(100vh - 10vh)', sm: `calc(100vh- 10vh)` },
           overflowY: 'auto',
           mt: { xs: 12, sm: 10 },
-          p: { xs: 1, sm: 2 }
+          p: { xs: 1, sm: 2 },
+          '&::-webkit-scrollbar': {
+            width: '0px'
+          },
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none'
         }}
       >
-        {/* Header for vendor  */}
-
-        <AppBar
-          position='fixed'
-          sx={{ zIndex: theme => theme.zIndex.drawer + 1, bgcolor: '#182433' }}
-        >
-          <Toolbar sx={{ height: '10vh' }}>
-            <IconButton
-              color='inherit'
-              aria-label='open drawer'
-              edge='start'
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { sm: 'none' } }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <IconButton
-              color='inherit'
-              aria-label='toggle sidebar'
-              edge='start'
-              onClick={handleSidebarToggle}
-              sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}
-            >
-              {sidebarOpen ? <MenuIcon /> : <MenuIcon />}
-            </IconButton>
-            <img
-              src={logo}
-              alt='Logo'
-              style={{ width: '110px', marginRight: '10px' }}
-            />
-            <Box sx={{ flexGrow: 1 }} />
-
-            <Badge
-              badgeContent={5}
-              color='secondary'
-              sx={{
-                '& .MuiBadge-badge': {
-                  backgroundColor: '#f44336', // Custom badge color
-                  color: 'white'
-                  // Badge text color
-                }
-              }}
-            >
-              <FaBell
-                size={28}
-                style={{ color: 'white', cursor: 'pointer', mx: 2 }}
-              />
-            </Badge>
-            {/* Hide profile on small screens */}
-
-            <Box ml={2}>
-              <Typography variant='body1' sx={{cursor:"pointer" }}>
-                Go to home page <ArrowForwardIosIcon />{' '}
-              </Typography>
-            </Box>
-          </Toolbar>
-        </AppBar>
-
         <Typography
           variant='h6'
           sx={{

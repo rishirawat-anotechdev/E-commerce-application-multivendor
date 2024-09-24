@@ -127,12 +127,13 @@ const options = {
   }
 }
 
-const AdminDashboard = ({ sidebarOpen }) => {
+const AdminDashboard = () => {
   const [timeRange, setTimeRange] = useState('Today')
   const [vendorStartDate, setVendorStartDate] = useState(null)
   const [vendorEndDate, setVendorEndDate] = useState(null)
   const [productStartDate, setProductStartDate] = useState(null)
   const [productEndDate, setProductEndDate] = useState(null)
+  
 
   return (
     <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
@@ -182,7 +183,7 @@ const AdminDashboard = ({ sidebarOpen }) => {
         <Paper
           elevation={3}
           sx={{
-            flex: { xs: '1 1 100%', lg: '1 1 70%' },
+            flex: { xs: '1 1 100%' , lg: '1 1 70%' },
             padding: '20px'
           }}
         >

@@ -264,7 +264,7 @@ const VendorDashboard = ({ sidebarOpen }) => {
       <Grid container spacing={4} sx={{ display: 'flex', flexWrap: 'wrap' }}>
         {/* Cards */}
         {cardData.map((card, index) => (
-          <Grid xs={12} md={6} lg={4}
+          <Grid xs={12} sm={6} md={6} lg={4}
             item
             key={index}
             sx={{ display: 'flex', justifyContent: 'center' }}
@@ -276,8 +276,7 @@ const VendorDashboard = ({ sidebarOpen }) => {
                 px: 2,
                 py:1,
                 color: 'white',
-               
-                width: '250px',
+               width: '250px',
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',

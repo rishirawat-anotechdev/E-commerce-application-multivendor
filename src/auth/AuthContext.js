@@ -1,5 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
-import jwt_decode from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode'; // Corrected import
+
+import api from '../API/api';
 
 // Create AuthContext
 export const AuthContext = createContext();
@@ -7,32 +9,38 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Check if user is authenticated (on mount)
   useEffect(() => {
-    const token = document.cookie.match(/token=([^;]*)/);
+    // Check localStorage for token when app starts
+    const token = localStorage.getItem('token');
     if (token) {
       try {
-        const decoded = jwt_decode(token[1]);
-        setUser(decoded);
-        setRole(decoded.role); // Assuming your JWT contains a `role` field
+        const decoded = jwtDecode(token);
+        setUser({ id: decoded.id });
+        setRole(decoded.accountType);
       } catch (error) {
         console.error('Invalid token');
         setUser(null);
         setRole(null);
       }
     }
+    setLoading(false); // Stop loading
   }, []);
 
-  const logout = () => {
-    // Clear token and user data
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    setUser(null);
-    setRole(null);
+  const logout = async () => {
+    try {
+      await api.post('users/logout', {}, { withCredentials: true });
+      localStorage.removeItem('token');
+      setUser(null);
+      setRole(null);
+    } catch (error) {
+      console.error('Logout failed');
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, logout }}>
+    <AuthContext.Provider value={{ user, role, logout, setUser, setRole, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -274,7 +274,8 @@ useEffect(() => {
               position: 'relative',
               bgcolor: '#151f2c',
               borderRadius: '4px',
-              border: '1px solid #fff'
+              border: '1px solid #fff',
+              mr:2
             }}
           >
             <SearchIcon

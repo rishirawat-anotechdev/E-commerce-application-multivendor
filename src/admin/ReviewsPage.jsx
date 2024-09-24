@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  IconButton, TextField,  Box, Divider , TablePagination,
+  IconButton, TextField,  Box , TablePagination,
   Paper
 } from '@mui/material';
 import { Delete, Visibility } from '@mui/icons-material';
