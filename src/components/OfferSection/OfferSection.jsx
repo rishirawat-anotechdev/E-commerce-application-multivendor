@@ -8,7 +8,7 @@ const OfferSection = ({ title, discount, image, bgColor }) => {
         <p className="text-gray-600 my-4 mr-30">There are many variations of passages of Lorem Ipsum available.There are many variations of passages of Lorem Ipsum available.</p>
         
         <div className="flex justify-between">
-          <button className="mt-20 bg-green-500 text-white h-10 px-2 rounded-full w-32 hover:bg-green-600">
+          <button className="mt-20 bg-green-500 text-white h-10 px-2 rounded-full w-32 hover:bg-green-600 whitespace-nowrap">
             Shop Now
           </button>
           <div className="relative h-40 ">

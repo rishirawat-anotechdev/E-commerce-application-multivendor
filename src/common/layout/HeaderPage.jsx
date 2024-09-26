@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import React, { useContext, useEffect, useState } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import logo from '../../assets/logo.png'
 import {
   AppBar,
@@ -21,7 +21,6 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import {
   Search as SearchIcon,
   AccountCircle,
-  ShoppingCart,
   FavoriteBorder,
   CompareArrows,
   Menu as MenuIcon,
@@ -32,81 +31,79 @@ import PromoBanner from '../../components/Layout/PromoBanner'
 import CategoryButton from '../../components/Layout/CategoryButton'
 import './layout.css'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
-import CloseIcon from '@mui/icons-material/Close';
-
-// ... (keep your categories array)
-
-const categories = [
-  // ... (your categories array remains unchanged)
-  {
-    title: 'Apples',
-    imageUrl: 'https://via.placeholder.com/64x64?text=Apples'
-  },
-  {
-    title: 'Bananas',
-    imageUrl: 'https://via.placeholder.com/64x64?text=Bananas'
-  },
-  {
-    title: 'Carrots',
-    imageUrl: 'https://via.placeholder.com/64x64?text=Carrots'
-  },
-  {
-    title: 'Broccoli',
-    imageUrl: 'https://via.placeholder.com/64x64?text=Broccoli'
-  },
-  {
-    title: 'Apples',
-    imageUrl: 'https://via.placeholder.com/64x64?text=Apples'
-  },
-  {
-    title: 'Bananas',
-    imageUrl: 'https://via.placeholder.com/64x64?text=Bananas'
-  },
-  {
-    title: 'Carrots',
-    imageUrl: 'https://via.placeholder.com/64x64?text=Carrots'
-  },
-  {
-    title: 'Broccoli',
-    imageUrl: 'https://via.placeholder.com/64x64?text=Broccoli'
-  }
-]
-
-const cartItems = [
-  {
-    name: 'Seeds of Change Organic Quinoe',
-    quantity: 1,
-    price: 776.56,
-    image: '/path/to/image.jpg'
-  },
-  {
-    name: "Angie's Boomchickapop Sweet & Salty Kettle Corn",
-    quantity: 1,
-    price: 188.65,
-    image: '/path/to/image.jpg'
-  },
-  {
-    name: 'Blue Diamond Almonds Lightly',
-    quantity: 1,
-    price: 186.88,
-    image: '/path/to/image.jpg'
-  },
-  {
-    name: 'Canada Dry Ginger Ale - 2 L Bottle',
-    quantity: 1,
-    price: 133.92,
-    image: '/path/to/image.jpg'
-  }
-]
-
+import CloseIcon from '@mui/icons-material/Close'
+import api from '../../API/api'
+import { AuthContext } from '../../auth/AuthContext'
+import LogoutIcon from '@mui/icons-material/Logout'
+import LoginIcon from '@mui/icons-material/Login'
 const HeaderPage = () => {
+  const { user, logout } = useContext(AuthContext)
+
+  const [categories, setCategories] = useState([])
   const [showCategories, setShowCategories] = useState(false)
-  // const [cartItems] = useState([]);
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+
+  const [cart, setCart] = useState([])
+  const [favorites, setFavorites] = useState([])
+
+  //Hover for dealy for dropdown
+  const [isFavoritesHovered, setIsFavoritesHovered] = useState(false)
+  const [isCartHovered, setIsCartHovered] = useState(false)
+  const [isProfileHovered, setIsProfileHovered] = useState(false)
+  const hoverTimeouts = {}
+
+  // Common delay duration (in milliseconds)
+  const delayDuration = 250
+
+  // Handlers for Favorites
+  const handleFavoritesMouseEnter = () => {
+    clearTimeout(hoverTimeouts['favorites'])
+    setIsFavoritesHovered(true)
+  }
+
+  const handleFavoritesMouseLeave = () => {
+    hoverTimeouts['favorites'] = setTimeout(() => {
+      setIsFavoritesHovered(false)
+    }, delayDuration)
+  }
+
+  // Handlers for Cart
+  const handleCartMouseEnter = () => {
+    clearTimeout(hoverTimeouts['cart'])
+    setIsCartHovered(true)
+  }
+
+  const handleCartMouseLeave = () => {
+    hoverTimeouts['cart'] = setTimeout(() => {
+      setIsCartHovered(false)
+    }, delayDuration)
+  }
+
+  // Handlers for Profile
+  const handleProfileMouseEnter = () => {
+    clearTimeout(hoverTimeouts['profile'])
+    setIsProfileHovered(true)
+  }
+
+  const handleProfileMouseLeave = () => {
+    hoverTimeouts['profile'] = setTimeout(() => {
+      setIsProfileHovered(false)
+    }, delayDuration)
+  }
+
+  //Logout and profile
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login') // Redirect to login after logout
+  }
 
   useEffect(() => {
     const controlHeader = () => {
@@ -158,12 +155,13 @@ const HeaderPage = () => {
           justifyContent: 'center'
         }}
       >
-        <img
-          src={logo}
-          alt='Nest'
-          style={{ width: '120px', marginRight: '8px' }}
-        />
-        
+        <Link to={'/'}>
+          <img
+            src={logo}
+            alt='Nest'
+            style={{ width: '120px', marginRight: '8px' }}
+          />
+        </Link>
       </Box>
       <Divider />
       <List>
@@ -187,7 +185,21 @@ const HeaderPage = () => {
           <ListItemText primary='Compare' sx={{ ml: 2 }} />
         </ListItem>
         <ListItem button>
-          <Badge badgeContent={3} color='secondary'>
+          <Badge
+            badgeContent={favorites.length}
+            color='primary'
+            sx={{
+              '& .MuiBadge-dot': {
+                backgroundColor: '#38a169'
+              },
+              '& .MuiBadge-standard': {
+                backgroundColor: '#38a169'
+              },
+              '& .MuiBadge-dot, & .MuiBadge-standard': {
+                color: 'white'
+              }
+            }}
+          >
             <FavoriteBorder />
           </Badge>
           <ListItemText primary='Wishlist' sx={{ ml: 2 }} />
@@ -207,20 +219,121 @@ const HeaderPage = () => {
           </Typography>
         </Box>
       </Box>
-      <Box
-        sx={{
-          mt: 'auto',
-          p: 2,
-          display: 'flex',
-          alignItems: 'center',
-          borderTop: '1px solid #e0e0e0'
-        }}
-      >
-        <Avatar sx={{ bgcolor: '#38a169', mr: 2 }}>P</Avatar>
-        <Typography variant='body1'>Profile</Typography>
-      </Box>
+      {user ? (
+        <Box
+          sx={{
+            mt: 'auto',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            borderTop: '1px solid #e0e0e0'
+          }}
+        >
+          <Avatar sx={{ bgcolor: '#38a169', mr: 2 }}>P</Avatar>
+          <Link to={`/userProfile/${user?.id}`}>
+            {' '}
+            <Typography variant='body1'>Profile</Typography>
+          </Link>
+        </Box>
+      ) : (
+        ''
+      )}
+
+      {user ? (
+        <Box
+          sx={{
+            mt: 'auto',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            borderTop: '1px solid #e0e0e0'
+          }}
+        >
+          <LogoutIcon sx={{ fontSize: 40, color: '#38a169', mr: 1 }} />
+
+          <Typography variant='body1' onClick={handleLogout}>
+            Logout
+          </Typography>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            mt: 'auto',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            borderTop: '1px solid #e0e0e0'
+          }}
+        >
+          <LoginIcon sx={{ fontSize: 40, color: '#38a169', mr: 1 }} />
+
+          <Typography variant='body1' onClick={handleLogout}>
+            Login
+          </Typography>
+        </Box>
+      )}
     </Box>
   )
+
+  // Fetch categories from API
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/category')
+      setCategories(response.data) // Set categories from response
+      setLoading(false) // Set loading to false after fetching
+    } catch (err) {
+      setError(err.message) // Set error message
+      setLoading(false) // Set loading to false even if there's an error
+    }
+  }
+
+  // Function to fetch cart data
+  const fetchCartData = async () => {
+    try {
+      const response = await api.get('/cart', {
+        withCredentials: true
+      })
+
+      const products = response.data.products
+      setCart(products) // Set cart items from response
+      // console.log('products', products)
+    } catch (error) {
+      console.error('Failed to fetch cart data:', error)
+    }
+  }
+
+  // Remove the cart items
+  const removeProductFromCart = async productId => {
+    try {
+      const response = await api.delete('/cart/remove', {
+        data: { productId },
+        withCredentials: true
+      })
+      console.log(response.data.message) // Handle success message
+    } catch (error) {
+      console.error('Failed to remove product from cart:', error)
+    }
+  }
+
+  // Function to fetch Fav data
+  const fetchFavData = async () => {
+    try {
+      const response = await api.get('/favorites', {
+        withCredentials: true
+      })
+
+      setFavorites(response.data.products) // Store the products in state
+      // console.log('products', response.data.products)
+    } catch (error) {
+      console.error('Failed to fetch cart data:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchCategories()
+    fetchCartData()
+    fetchFavData()
+  }, []) // Fetch cart data once on mount
 
   return (
     <>
@@ -247,19 +360,20 @@ const HeaderPage = () => {
               </IconButton>
             )}
             {!isMobile && (
-              <Link to={"/homepage"}><Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <img
-                src={logo}
-                alt='Nest'
-                style={{ width:'130px' ,  marginRight: '8px' }}
-              />
-             
-            </Box></Link>
+              <Link to={'/homepage'}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <img
+                    src={logo}
+                    alt='Nest'
+                    style={{ width: '130px', marginRight: '8px' }}
+                  />
+                </Box>
+              </Link>
             )}
           </Box>
 
           {/* Search Bar */}
-          <div className='flex items-center bg-green-50 w-[300px] md:w-[200px] border-green-400 hover:border-green-600 border lg:w-[500px]  rounded'>
+          <div className='flex items-center bg-green-50 w-[300px] md:w-[300px] border-green-400 hover:border-green-600 border lg:w-[500px] '>
             <input
               type='search'
               className='flex-grow p-2 outline-none text-black '
@@ -268,30 +382,71 @@ const HeaderPage = () => {
             <SearchIcon className='text-green-500  ml-2' />
           </div>
 
+          {/* cart for mobile screen  */}
+
           {isMobile && (
-            <IconButton color='inherit'>
-              <Badge
-                badgeContent={cartItems.length}
-                color='primary'
-                sx={{
-                  '& .MuiBadge-dot': {
-                    backgroundColor: '#38a169' // Green color
-                  },
-                  '& .MuiBadge-standard': {
-                    backgroundColor: '#38a169' // Green color
-                  },
-                  '& .MuiBadge-dot, & .MuiBadge-standard': {
-                    color: 'white'
-                  }
-                }}
-              >
-                <ShoppingCart />
-              </Badge>
-            </IconButton>
+            <div className='relative group'>
+              <button className='p-2 text-gray-600 hover:text-gray-800'>
+                <div className='relative'>
+                  <ShoppingCartIcon size={24} />
+
+                  <span className='absolute -top-2 -right-2 bg-[#38a169] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
+                    {cart.length} {/* Display number of items in cart */}
+                  </span>
+                </div>
+              </button>
+
+              <div className='absolute right-0 mt-2 w-[300px] bg-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto z-10'>
+                <div className='p-4 max-h-96 scrollbar-hide overflow-y-auto'>
+                  {cart.length === 0 ? ( // Check if the cart is empty
+                    <p className='text-center text-gray-500'>
+                      No items in cart
+                    </p> // Display message if cart is empty
+                  ) : (
+                    cart.map(item => (
+                      <div
+                        key={item._id}
+                        className='flex items-center mb-4 last:mb-0'
+                      >
+                        <img
+                          src={item.product.image[0]} // Get the first image from the product array
+                          alt={item.product.name}
+                          className='w-12 h-12 object-cover mr-3'
+                        />
+                        <div className='flex-grow'>
+                          <p className='text-sm font-medium'>
+                            {item.product.name}
+                          </p>
+                          <p className='text-xs text-gray-500'>
+                            {item.quantity} x ${item.product.price.toFixed(2)}
+                          </p>
+                        </div>
+                        <button
+                          className='text-gray-400 hover:text-gray-600'
+                          onClick={() =>
+                            removeProductFromCart(item?.product._id)
+                          }
+                        >
+                          <CloseIcon />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className='p-4 border-t'>
+                  <Link to={'/cart'}>
+                    <button className='w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-150'>
+                      View Cart
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </div>
           )}
 
           {!isMobile && (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {/* compare  */}
               <IconButton color='inherit'>
                 <Badge
                   badgeContent={0}
@@ -311,93 +466,203 @@ const HeaderPage = () => {
                   <CompareArrows />
                 </Badge>
               </IconButton>
-              <IconButton color='inherit'>
-                <Badge
-                  badgeContent={3}
-                  color='primary'
-                  sx={{
-                    '& .MuiBadge-dot': {
-                      backgroundColor: '#38a169' // Green color
-                    },
-                    '& .MuiBadge-standard': {
-                      backgroundColor: '#38a169' // Green color
-                    },
-                    '& .MuiBadge-dot, & .MuiBadge-standard': {
-                      color: 'white'
-                    }
-                  }}
-                >
-                  <FavoriteBorder />
-                </Badge>
-              </IconButton>
-              <div className='relative group'>
-                <button className='p-2 text-gray-600 hover:text-gray-800'>
-                  <div className='relative'>
-                   <Link to={"/cart"}> <ShoppingCartIcon size={24} /></Link>
-                    <span className='absolute -top-2 -right-2 bg-[#38a169] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
-                      {cartItems.length}
-                    </span>
-                  </div>
-                </button>
 
-                <div className='absolute right-0 mt-2 w-[300px] bg-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto z-10'>
-                  <div className='p-4 max-h-96 scrollbar-hide  overflow-y-auto'>
-                    {cartItems.map((item, index) => (
-                      <div
-                        key={index}
-                        className='flex items-center mb-4 last:mb-0'
-                      >
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className='w-12 h-12 object-cover mr-3'
-                        />
-                        <div className='flex-grow'>
-                          <p className='text-sm font-medium'>{item.name}</p>
-                          <p className='text-xs text-gray-500'>
-                            {item.quantity} x ${item.price.toFixed(2)}
-                          </p>
-                        </div>
-                        <button className='text-gray-400 hover:text-gray-600'>
-                         <CloseIcon /> 
+              <div className='flex space-x-6'>
+                {/* Favorites */}
+                <div
+                  className='relative group'
+                  onMouseEnter={handleFavoritesMouseEnter}
+                  onMouseLeave={handleFavoritesMouseLeave}
+                >
+                  <IconButton color='inherit'>
+                    <Badge
+                      badgeContent={favorites.length}
+                      color='primary'
+                      sx={{
+                        '& .MuiBadge-dot': {
+                          backgroundColor: '#38a169'
+                        },
+                        '& .MuiBadge-standard': {
+                          backgroundColor: '#38a169'
+                        },
+                        '& .MuiBadge-dot, & .MuiBadge-standard': {
+                          color: 'white'
+                        }
+                      }}
+                    >
+                      <FavoriteBorder />
+                    </Badge>
+                  </IconButton>
+
+                  <div
+                    className={`absolute right-0 mt-2 w-[300px] bg-white rounded-md shadow-lg transition-opacity duration-500 z-10 ${
+                      isFavoritesHovered
+                        ? 'opacity-100 pointer-events-auto'
+                        : 'opacity-0 pointer-events-none'
+                    }`}
+                  >
+                    <div className='p-4 max-h-96 scrollbar-hide overflow-y-auto'>
+                      {favorites.length === 0 ? (
+                        <p className='text-center text-gray-500'>
+                          No items in favorites
+                        </p>
+                      ) : (
+                        favorites.map(item => (
+                          <div
+                            key={item._id}
+                            className='flex items-center mb-4 last:mb-0'
+                          >
+                            <img
+                              src={item.image[0]}
+                              alt={item.name}
+                              className='w-12 h-12 object-cover mr-3'
+                            />
+                            <div className='flex-grow'>
+                              <p className='text-sm font-medium'>{item.name}</p>
+                              <p className='text-xs text-gray-500'>
+                                ${item.price.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cart */}
+                <div
+                  className='relative group'
+                  onMouseEnter={handleCartMouseEnter}
+                  onMouseLeave={handleCartMouseLeave}
+                >
+                  <button className='p-2 text-gray-600 hover:text-gray-800'>
+                    <div className='relative'>
+                      <Link to={'/cart'}>
+                        <ShoppingCartIcon size={24} />
+                      </Link>
+                      <span className='absolute -top-2 -right-2 bg-[#38a169] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
+                        {cart.length}
+                      </span>
+                    </div>
+                  </button>
+
+                  <div
+                    className={`absolute right-0 mt-2 w-[300px] bg-white rounded-md shadow-lg transition-opacity duration-500 z-10 ${
+                      isCartHovered
+                        ? 'opacity-100 pointer-events-auto'
+                        : 'opacity-0 pointer-events-none'
+                    }`}
+                  >
+                    <div className='p-4 max-h-96 scrollbar-hide overflow-y-auto'>
+                      {cart.length === 0 ? (
+                        <p className='text-center text-gray-500'>
+                          No items in cart
+                        </p>
+                      ) : (
+                        cart.map(item => (
+                          <div
+                            key={item._id}
+                            className='flex items-center mb-4 last:mb-0'
+                          >
+                            <img
+                              src={item.product.image[0]}
+                              alt={item.product.name}
+                              className='w-12 h-12 object-cover mr-3'
+                            />
+                            <div className='flex-grow'>
+                              <p className='text-sm font-medium'>
+                                {item.product.name}
+                              </p>
+                              <p className='text-xs text-gray-500'>
+                                {item.quantity} x $
+                                {item.product.price.toFixed(2)}
+                              </p>
+                            </div>
+                            <button
+                              className='text-gray-400 hover:text-gray-600'
+                              onClick={() =>
+                                removeProductFromCart(item?.product._id)
+                              }
+                            >
+                              <CloseIcon />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className='p-4 border-t'>
+                      <Link to={'/cart'}>
+                        <button className='w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-150'>
+                          View Cart
                         </button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile */}
+                <nav>
+                  <ul className='flex p-2 items-center space-x-4'>
+                    <li
+                      className='relative group'
+                      onMouseEnter={handleProfileMouseEnter}
+                      onMouseLeave={handleProfileMouseLeave}
+                    >
+                      <button className='focus:outline-none'>
+                        <AccountCircle size={24} className='text-md' />
+                      </button>
+                      <div
+                        className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg transition-opacity duration-500 z-10 ${
+                          isProfileHovered
+                            ? 'opacity-100 pointer-events-auto'
+                            : 'opacity-0 pointer-events-none'
+                        }`}
+                      >
+                        <div className='py-1'>
+                          {user ? (
+                            <>
+                              <Link
+                                to={`/userProfile/${user?.id}`}
+                                className='block px-4 py-2 text-gray-800 hover:bg-green-100'
+                              >
+                                Profile
+                              </Link>
+                              <button
+                                onClick={handleLogout}
+                                className='block w-full text-left px-4 py-2 text-gray-800 hover:bg-green-100'
+                              >
+                                Logout
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                to='/login'
+                                className='block px-4 py-2 text-gray-800 hover:bg-green-100'
+                              >
+                                Login
+                              </Link>
+                              <Link
+                                to='/register'
+                                className='block px-4 py-2 text-gray-800 hover:bg-green-100'
+                              >
+                                Register
+                              </Link>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className='p-4 border-t'>
-                    <Link to={"/cart"}>
-                    <button className='w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-150'>
-                      View Cart
-                    </button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              <div className='relative group'>
-                <button className='focus:outline-none'>
-                  <AccountCircle className='text-md' />
-                </button>
-                <div className='absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto z-10'>
-                  <div className='py-1'>
-                    <a
-                      href='/login'
-                      className='block px-4 py-2 text-gray-800 hover:bg-green-100'
-                    >
-                      Login
-                    </a>
-                    <a
-                      href='/register'
-                      className='block px-4 py-2 text-gray-800 hover:bg-green-100'
-                    >
-                      Register
-                    </a>
-                  </div>
-                </div>
+                    </li>
+                  </ul>
+                </nav>
               </div>
             </Box>
           )}
         </Toolbar>
         <Divider />
+
+        {/* Browse categories */}
         {!isMobile && (
           <Toolbar
             sx={{
@@ -423,13 +688,19 @@ const HeaderPage = () => {
                   onMouseLeave={() => setShowCategories(false)}
                 >
                   <div className='grid grid-cols-3 gap-2'>
-                    {categories.map((category, index) => (
-                      <CategoryButton
-                        key={index}
-                        title={category.title}
-                        imageUrl={category.imageUrl}
-                      />
-                    ))}
+                    {loading && <p>Loading categories...</p>}{' '}
+                    {/* Loading state */}
+                    {error && <p>Error fetching categories: {error}</p>}{' '}
+                    {/* Error state */}
+                    {!loading &&
+                      !error &&
+                      categories.map(category => (
+                        <CategoryButton
+                          key={category._id} // Use _id as the key
+                          title={category.name} // Change to category.name based on your response
+                          imageUrl={category.imageUrl} // Make sure you have imageUrl in your category data
+                        />
+                      ))}
                   </div>
                 </div>
               </div>
@@ -519,10 +790,9 @@ const HeaderPage = () => {
         )}
         {isMobile && (
           <div className='flex items-center justify-between px-3 py-2'>
-            {' '}
-            <div className='relative group '>
+            <div className='relative group'>
               <button
-                className='text-nowrap  bg-[#38a169] text-white py-1 px-2 rounded-lg'
+                className='text-nowrap bg-[#38a169] text-white py-1 px-2 rounded-lg'
                 onMouseEnter={() => setShowCategories(true)}
                 onMouseLeave={() => setShowCategories(false)}
               >
@@ -532,18 +802,24 @@ const HeaderPage = () => {
               </button>
               <div
                 className={`absolute top-full z-50 left-0 mt-2 p-2 bg-white border rounded-lg shadow-lg w-[400px] 
-                ${showCategories ? 'block' : 'hidden'} group-hover:block`}
+              ${showCategories ? 'block' : 'hidden'} group-hover:block`}
                 onMouseEnter={() => setShowCategories(true)}
                 onMouseLeave={() => setShowCategories(false)}
               >
                 <div className='grid grid-cols-3 gap-2'>
-                  {categories.map((category, index) => (
-                    <CategoryButton
-                      key={index}
-                      title={category.title}
-                      imageUrl={category.imageUrl}
-                    />
-                  ))}
+                  {loading && <p>Loading categories...</p>}{' '}
+                  {/* Loading state */}
+                  {error && <p>Error fetching categories: {error}</p>}{' '}
+                  {/* Error state */}
+                  {!loading &&
+                    !error &&
+                    categories.map(category => (
+                      <CategoryButton
+                        key={category._id} // Use _id as the key
+                        title={category.name} // Change to category.name based on your response
+                        imageUrl={category.imageUrl} // Make sure you have imageUrl in your category data
+                      />
+                    ))}
                 </div>
               </div>
             </div>
