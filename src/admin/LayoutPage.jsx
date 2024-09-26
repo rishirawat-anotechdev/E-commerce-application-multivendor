@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import {
   AppBar,
   Toolbar,
@@ -23,7 +23,6 @@ import {
   MdDashboard,
   MdShoppingCart,
   MdStore,
-  MdInsertDriveFile,
   MdArticle,
   MdPayment
 } from 'react-icons/md'
@@ -32,14 +31,13 @@ import {
   FaUsers,
   FaTags,
   FaCog,
-  FaChartLine,
-  FaClipboardList,
   FaCommentAlt,
   FaBell
 } from 'react-icons/fa'
 
 import { Link, Outlet, useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.png'
+import { AuthContext } from '../auth/AuthContext'
 
 const navLinks = [
   {
@@ -136,12 +134,17 @@ const navLinks = [
 ]
 
 const Layout = () => {
+  const {user, logout } = useContext(AuthContext)
+  console.log(user);
+  
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [currentRoute, setCurrentRoute] = useState('Dashboard')
   const drawerWidth = sidebarOpen ? 270 : 80
+  const [isHovered, setIsHovered] = useState(false);
+  let hoverTimeout;
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -155,6 +158,22 @@ const Layout = () => {
     setSelectedIndex(index)
     navigate(link) // Use navigate to route to the appropriate page
   }
+
+  const handleLogout = () => {
+    navigate("/login")
+    logout()
+  }
+
+  const handleMouseEnter = () => {
+    // Set a delay before showing the dropdown
+    hoverTimeout = setTimeout(() => setIsHovered(true), 300); // 300ms delay
+  };
+
+  const handleMouseLeave = () => {
+    // Clear timeout and hide the dropdown
+    clearTimeout(hoverTimeout);
+    setIsHovered(false);
+  };
 
   const drawer = (
     <div>
@@ -300,36 +319,70 @@ useEffect(() => {
               }}
             />
           </Box>
-          <Badge
-            badgeContent={5}
-            color='secondary'
+          <Box display='flex' alignItems='center'>
+      {/* Conditional rendering based on user state */}
+      {user ? (
+        <>
+          {/* Profile section with hover effect and delay */}
+          <Box
+            display='flex'
+            alignItems='center'
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             sx={{
-              '& .MuiBadge-badge': {
-                backgroundColor: '#f44336', // Custom badge color
-                color: 'white'
-                // Badge text color
-              }
+              position: 'relative',
+              cursor: 'pointer',
             }}
           >
-            <FaBell
-              size={28}
-              style={{ color: 'white', cursor: 'pointer', mx: 2 }}
-            />
-          </Badge>
-          {/* Hide profile on small screens */}
-          <Link to={'/admin/admin-profile'}>
-            <Box
-              display={{ xs: 'none', sm: 'flex' }}
-              alignItems='center'
-              sx={{ ml: 2, color: 'white' }}
-            >
-              <Avatar alt='Profile' src='/path-to-image.jpg' />
-              <Box ml={2}>
-                <Typography variant='body1'>Linda Bashirian</Typography>
-                <Typography variant='body2'>linda@example.com</Typography>
-              </Box>
+            <Avatar alt='Profile' src='/path-to-image.jpg' />
+            <Box ml={2}>
+              <Typography variant='body1'>{user.name}</Typography>
             </Box>
+
+            {/* Hover group: Profile details with delay */}
+            <Box
+              className='profile-details'
+              sx={{
+                display: isHovered ? 'block' : 'none',
+                opacity: isHovered ? 1 : 0,
+                transition: 'opacity 0.3s ease-in-out',
+                position: 'absolute',
+                top: '100%',
+                right: 10, // Positioning the dropdown from the right side
+                backgroundColor: '#2e3847',
+                boxShadow: 1,
+                p: 2,
+                borderRadius: 1,
+                zIndex: 1,
+              }}
+            >
+              {/* <Typography variant='body2'>{user.fullName}</Typography> */}
+              <Link
+                to='/admin/admin-profile'
+                sx={{  mt: 1, color: 'white', cursor: 'pointer', whiteSpace:"nowrap" }}
+              >
+                Profile
+              </Link>
+              <Typography
+                onClick={logout}
+                sx={{ color: 'white', cursor: 'pointer', mt: 1 }}
+              >
+                Logout
+              </Typography>
+            </Box>
+          </Box>
+        </>
+      ) : (
+        <>
+          {/* Display login link if no user is logged in */}
+          <Link to='/login'>
+            <Typography variant='body1' sx={{ color: 'white' }}>
+              Login
+            </Typography>
           </Link>
+        </>
+      )}
+    </Box>
         </Toolbar>
       </AppBar>
       <Drawer
@@ -392,6 +445,7 @@ useEffect(() => {
       </Drawer>
       <Box
         component='main'
+          className='scrollbar-hide'
         sx={{
           backgroundColor: '#f6f8fb',
           width: { xs: '100%', sm: `calc(100vw - ${drawerWidth}px)` },
@@ -400,8 +454,14 @@ useEffect(() => {
           maxHeight: { xs: 'calc(100vh - 10vh)', sm: `calc(100vh- 10vh)` },
           overflowY: 'auto',
           mt: { xs: 12, sm: 10 },
-          p: { xs: 1, sm: 2 }
+          p: { xs: 1, sm: 2 },
+          '&::-webkit-scrollbar': {
+            width: '0px'
+          },
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none'
         }}
+    
       >
         <Typography
           variant='h6'

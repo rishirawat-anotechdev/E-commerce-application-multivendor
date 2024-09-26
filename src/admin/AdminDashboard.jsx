@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import {
   Grid,
@@ -35,6 +35,7 @@ import {
 import IndiaMap from '../common/IndiaMap'
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3'
+import api from '../API/api'
 
 ChartJS.register(
   CategoryScale,
@@ -71,33 +72,6 @@ const fakeProducts = [
   { id: 10, name: 'Product Q', sales: 50 }
 ]
 
-const cardData = [
-  {
-    title: 'Orders',
-    value: 45,
-    color: '#1abc9c',
-    icon: <MdShoppingCart size={50} style={{ opacity: 0.2 }} />
-  },
-  {
-    title: 'Products',
-    value: 24,
-    color: '#3498db',
-    icon: <MdProductionQuantityLimits size={50} style={{ opacity: 0.2 }} />
-  },
-  {
-    title: 'Customers',
-    value: 10,
-    color: '#5DADE2',
-    icon: <MdPeople size={50} style={{ opacity: 0.2 }} />
-  },
-  {
-    title: 'Reviews',
-    value: 233,
-    color: '#1F618D',
-    icon: <MdRateReview size={50} style={{ opacity: 0.2 }} />
-  }
-]
-
 const data = {
   labels: ['1 Day', '1 Week', '1 Month', '1 Year'],
   datasets: [
@@ -131,9 +105,143 @@ const AdminDashboard = () => {
   const [timeRange, setTimeRange] = useState('Today')
   const [vendorStartDate, setVendorStartDate] = useState(null)
   const [vendorEndDate, setVendorEndDate] = useState(null)
+  const [vendorsData, setVendorsData] = useState([])
   const [productStartDate, setProductStartDate] = useState(null)
   const [productEndDate, setProductEndDate] = useState(null)
-  
+  const [orderValue, setOrderValue] = useState(null)
+  const [productValue, setProductValue] = useState(null)
+  const [customerValue, setCustomerValue] = useState(null)
+  const [reviewValue, setReviewValue] = useState(null)
+  const [topProducts, setTopProducts] = useState([])
+  //console.log(reviewValue);
+
+  ////////////////////////START////////////////////////////
+
+  // get all the cards data
+  const getOrdersDetails = async () => {
+    try {
+      const response = await api.get('/admin/orders', {
+        withCredentials: true
+      })
+      setOrderValue(response.data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getProductDetails = async () => {
+    try {
+      const response = await api.get('/admin/products', {
+        withCredentials: true
+      })
+      setProductValue(response.data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getCustomersDetails = async () => {
+    try {
+      const response = await api.get('admin/users-count', {
+        withCredentials: true
+      })
+      setCustomerValue(response.data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getReviewsDetails = async () => {
+    try {
+      const response = await api.get('/admin/reviews', {
+        withCredentials: true
+      })
+      setReviewValue(response.data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  //////////// //END //////////////////
+
+  // Fetch vendor report on date change
+  const getVendorReport = async () => {
+    try {
+      const response = await api.get(
+        `admin/vendor-report?startDate=${vendorStartDate}&endDate=${vendorEndDate}`,
+        {
+          withCredentials: true
+        }
+      )
+      // console.log(response)
+      setVendorsData(response.data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    if (vendorStartDate && vendorEndDate) {
+      getVendorReport()
+    }
+  }, [vendorStartDate, vendorEndDate])
+
+  // Function to fetch top-selling products
+  const getTopProduct = async () => {
+    try {
+      const response = await api.get(
+        `admin/top-product?startDate=${productStartDate}&endDate=${productEndDate}`,
+        {
+          withCredentials: true
+        }
+      )
+      console.log(response)
+      if (response.data.success) {
+        setTopProducts(response.data.topProducts)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  // Fetch top products when the component mounts or when dates change
+  useEffect(() => {
+    getTopProduct()
+  }, [productStartDate, productEndDate]) // Call API on date change
+
+  useEffect(() => {
+    getOrdersDetails()
+    getProductDetails()
+    getCustomersDetails()
+    getReviewsDetails()
+  }, [])
+
+  const cardData = [
+    {
+      title: 'Orders',
+      value: orderValue?.totalOrders,
+      color: '#1abc9c',
+      icon: <MdShoppingCart size={50} style={{ opacity: 0.2 }} />
+    },
+    {
+      title: 'Products',
+      value: productValue?.totalCount,
+      color: '#3498db',
+      icon: <MdProductionQuantityLimits size={50} style={{ opacity: 0.2 }} />
+    },
+    {
+      title: 'Customers',
+      value: customerValue?.userCount,
+      color: '#5DADE2',
+      icon: <MdPeople size={50} style={{ opacity: 0.2 }} />
+    },
+    {
+      title: 'Reviews',
+      value: reviewValue?.totalReviews,
+      color: '#1F618D',
+      icon: <MdRateReview size={50} style={{ opacity: 0.2 }} />
+    }
+  ]
 
   return (
     <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
@@ -183,7 +291,7 @@ const AdminDashboard = () => {
         <Paper
           elevation={3}
           sx={{
-            flex: { xs: '1 1 100%' , lg: '1 1 70%' },
+            flex: { xs: '1 1 100%', lg: '1 1 70%' },
             padding: '20px'
           }}
         >
@@ -284,25 +392,37 @@ const AdminDashboard = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Vendor Name</TableCell>
-                    <TableCell align='right'>Sales</TableCell>
+                    <TableCell align='right'>Products Sold</TableCell>
+                    <TableCell align='right'>Total Revenue</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {fakeVendors.map((vendor, index) => (
-                    <TableRow
-                      key={vendor.id}
-                      style={{
-                        backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white'
-                      }}
-                    >
-                      <TableCell component='th' scope='row'>
-                        {vendor.name}
-                      </TableCell>
-                      <TableCell align='right'>
-                        ${vendor.sales.toLocaleString()}
+                  {vendorsData.length > 0 ? (
+                    vendorsData.map((vendor, index) => (
+                      <TableRow
+                        key={vendor._id}
+                        style={{
+                          backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white'
+                        }}
+                      >
+                        <TableCell component='th' scope='row'>
+                          {vendor.vendorName}
+                        </TableCell>
+                        <TableCell align='right'>
+                          {vendor.totalProductsSold}
+                        </TableCell>
+                        <TableCell align='right'>
+                          ${vendor.totalRevenue.toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} align='center'>
+                        No data available for the selected date range
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -336,9 +456,9 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {fakeProducts.map((product, index) => (
+                  {topProducts.map((product, index) => (
                     <TableRow
-                      key={product.id}
+                      key={product.productId}
                       style={{
                         backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white'
                       }}
@@ -346,7 +466,7 @@ const AdminDashboard = () => {
                       <TableCell component='th' scope='row'>
                         {product.name}
                       </TableCell>
-                      <TableCell align='right'>{product.sales}</TableCell>
+                      <TableCell align='right'>{product.totalSold}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

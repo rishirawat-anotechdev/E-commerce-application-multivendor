@@ -1,171 +1,473 @@
-import React, { useState } from 'react';
-import { Box, Typography, Avatar, List, ListItem, ListItemText, ListItemIcon, Button, Divider } from '@mui/material';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import ReviewsIcon from '@mui/icons-material/Reviews';
-import DownloadIcon from '@mui/icons-material/Download';
-import ReturnIcon from '@mui/icons-material/AssignmentReturn';
-import AddressIcon from '@mui/icons-material/LocationOn';
-import SettingsIcon from '@mui/icons-material/Settings';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import LogoutIcon from '@mui/icons-material/Logout';
-
-// Fake data for each section
-const ordersData = [
-  { id: 1, product: 'Laptop', date: '2024-09-12', status: 'Delivered' },
-  { id: 2, product: 'Phone', date: '2024-09-15', status: 'Processing' },
-];
-
-const reviewsData = [
-  { id: 1, product: 'Laptop', rating: 5, comment: 'Great product!' },
-  { id: 2, product: 'Phone', rating: 4, comment: 'Good value for money.' },
-];
-
-const downloadsData = [
-  { id: 1, product: 'Ebook - How to code', downloadLink: '#' },
-  { id: 2, product: 'PDF - React Guide', downloadLink: '#' },
-];
-
-const returnRequestsData = [
-  { id: 1, product: 'Headphones', reason: 'Faulty item', status: 'Pending' },
-];
-
-const addressesData = [
-  { id: 1, address: '1234 Main St, New York, NY', type: 'Home' },
-  { id: 2, address: '5678 Oak St, Los Angeles, CA', type: 'Office' },
-];
+import React, { useContext, useEffect, useState } from 'react'
+import {
+  Box,
+  Typography,
+  Avatar,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Button,
+  Divider,
+  TextField,
+  Snackbar,
+  Alert
+} from '@mui/material'
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
+import AddressIcon from '@mui/icons-material/LocationOn'
+import SettingsIcon from '@mui/icons-material/Settings'
+import LogoutIcon from '@mui/icons-material/Logout'
+import api from '../API/api'
+import { useNavigate, useParams } from 'react-router-dom'
+import { green } from '@mui/material/colors'
+import { AuthContext } from '../auth/AuthContext'
 
 const UserProfile = () => {
-  // State to manage selected tab
-  const [selectedTab, setSelectedTab] = useState('overview');
+  const { logout } = useContext(AuthContext)
+  const navigate = useNavigate()
 
-  // Function to render content based on selected tab
+  const { userId } = useParams()
+  const [userDetails, setUserDetails] = useState(null)
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState('')
+  
+  
+  const [updatedUserDetails, setUpdatedUserDetails] = useState({
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    city: '',
+    state: '',
+    homeNumber: '',
+    pinCode: '',
+    landmark: ''
+  })
+
+  
+
+  const fetchUserDetails = async () => {
+    try {
+      const response = await api.get(`/users/profile/${userId}`, {
+        withCredentials: true
+      })
+      const user = response?.data.user
+      setUserDetails(user)
+      setUpdatedUserDetails({
+        fullName: user?.fullName || '',
+        email: user?.email || '',
+        phoneNumber: user?.phoneNumber || ''
+       
+      })
+    } catch (error) {
+      console.log('Failed to load user details', error)
+    }
+  }
+
+  const updateUserDetails = async () => {
+    try {
+      await api.put(`/users/${userId}/profile`, updatedUserDetails, {
+        withCredentials: true
+      })
+      fetchUserDetails()
+      setSnackbarMessage('User details updated successfully')
+      setSnackbarOpen(true)
+    } catch (error) {
+      console.log('Failed to update user details', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchUserDetails()
+  }, [userId])
+
+  const handleInputChange = e => {
+    const { name, value } = e.target
+    setUpdatedUserDetails({
+      ...updatedUserDetails,
+      [name]: value
+    })
+  }
+
+  const [selectedTab, setSelectedTab] = useState('overview')
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login') // Redirect to login after logout
+  }
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false)
+  }
+
   const renderContent = () => {
     switch (selectedTab) {
       case 'overview':
-        return <Typography>No orders have been made yet. Browse products now!</Typography>;
-
+        return (
+          <Box
+            display='flex'
+            flexDirection='column'
+            alignItems='center'
+            p={3}
+            sx={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              boxShadow: 2
+            }}
+          >
+            <Avatar
+              alt={userDetails?.fullName || 'User Avatar'}
+              src='https://i.pravatar.cc/150?img=12'
+              sx={{ width: 100, height: 100, mb: 2 }}
+            />
+            <Typography variant='h5' gutterBottom>
+              {userDetails?.fullName || 'Full Name'}
+            </Typography>
+            <Typography variant='body1' color='textSecondary'>
+              {userDetails?.email || 'Email not provided'}
+            </Typography>
+            <Typography variant='body2' color='textSecondary' sx={{ mb: 1 }}>
+              Phone: {userDetails?.phoneNumber || 'N/A'}
+            </Typography>
+            <Box
+              display='flex'
+              justifyContent='space-around'
+              width='100%'
+              mt={3}
+            >
+              <Box textAlign='center'>
+                <Typography variant='h6'  sx={{color:'#45bf4c'}}>
+                  Orders
+                </Typography>
+                <Typography variant='h6'>
+                  {userDetails?.orders?.length || 0}
+                </Typography>
+              </Box>
+              <Box textAlign='center'>
+                <Typography variant='h6' sx={{color:'#45bf4c'}}>
+                  Wishlist
+                </Typography>
+                <Typography variant='h6' >
+                  {userDetails?.wishlist?.length || 0}
+                </Typography>
+              </Box>
+              <Box textAlign='center' >
+                <Typography variant='h6' sx={{color:'#45bf4c'}}>
+                  Cart
+                </Typography>
+                <Typography variant='h6'>
+                  {userDetails?.reviews?.length || 0}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        )
       case 'orders':
-        return ordersData.map((order) => (
-          <Box key={order.id} mb={2} p={2} bgcolor="white" sx={{ borderRadius: '8px', boxShadow: 1 }}>
-            <Typography><strong>Product:</strong> {order.product}</Typography>
-            <Typography><strong>Date:</strong> {order.date}</Typography>
-            <Typography><strong>Status:</strong> {order.status}</Typography>
-          </Box>
-        ));
-
-      case 'cart':
-        return reviewsData.map((review) => (
-          <Box key={review.id} mb={2} p={2} bgcolor="white" sx={{ borderRadius: '8px', boxShadow: 1 }}>
-            <Typography><strong>Product:</strong> {review.product}</Typography>
-            <Typography><strong>Rating:</strong> {review.rating} / 5</Typography>
-            <Typography><strong>Comment:</strong> {review.comment}</Typography>
-          </Box>
-        ));
-
-      case 'wishlist':
-        return downloadsData.map((download) => (
-          <Box key={download.id} mb={2} p={2} bgcolor="white" sx={{ borderRadius: '8px', boxShadow: 1 }}>
-            <Typography><strong>Product:</strong> {download.product}</Typography>
-            <Button href={download.downloadLink} variant="contained" color="primary">Download</Button>
-          </Box>
-        ));
-
-      case 'returnRequests':
-        return returnRequestsData.map((request) => (
-          <Box key={request.id} mb={2} p={2} bgcolor="white" sx={{ borderRadius: '8px', boxShadow: 1 }}>
-            <Typography><strong>Product:</strong> {request.product}</Typography>
-            <Typography><strong>Reason:</strong> {request.reason}</Typography>
-            <Typography><strong>Status:</strong> {request.status}</Typography>
-          </Box>
-        ));
-
+        return userDetails?.orders?.length ? (
+          userDetails.orders.map(order => (
+            <Box
+              key={order._id}
+              mb={2}
+              p={2}
+              bgcolor='white'
+              sx={{ borderRadius: '8px', boxShadow: 1 }}
+            >
+              <Typography variant='h6' gutterBottom>
+                <strong>Order Date:</strong>{' '}
+                {new Date(order.createdAt).toLocaleDateString()}
+              </Typography>
+              <Typography variant='body1' gutterBottom>
+                <strong>Total Price:</strong> ${order.totalPrice}
+              </Typography>
+              <Typography variant='body1' gutterBottom>
+                <strong>Payment Status:</strong> {order.paymentStatus}
+              </Typography>
+              <Box mt={2}>
+                <Typography variant='h6' gutterBottom>
+                  <strong>Delivery Address:</strong>
+                </Typography>
+                <Typography>
+                  Home Number: {order.deliveryAddress.homeNumber}
+                </Typography>
+                <Typography>
+                  Landmark: {order.deliveryAddress.landmark}
+                </Typography>
+                <Typography>
+                  City: {order.deliveryAddress.city}, State:{' '}
+                  {order.deliveryAddress.state} -{' '}
+                  {order.deliveryAddress.pinCode}
+                </Typography>
+              </Box>
+              <Box mt={2}>
+                <Typography variant='h6' gutterBottom>
+                  <strong>Products:</strong>
+                </Typography>
+                {order.products.map(item => (
+                  <Box
+                    key={item._id}
+                    display='flex'
+                    alignItems='center'
+                    mb={2}
+                    p={2}
+                    sx={{
+                      borderRadius: '8px',
+                      boxShadow: 1,
+                      backgroundColor: '#f5f5f5'
+                    }}
+                  >
+                    <Box
+                      component='img'
+                      src={item.product.image[0]}
+                      alt={item.product.name}
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        marginRight: '16px'
+                      }}
+                    />
+                    <Box>
+                      <Typography>
+                        <strong>Name:</strong> {item.product.name}
+                      </Typography>
+                      <Typography>
+                        <strong>Price:</strong> ${item.product.price}
+                      </Typography>
+                      <Typography>
+                        <strong>Quantity:</strong> {item.quantity}
+                      </Typography>
+                      <Typography>
+                        <strong>Total:</strong> $
+                        {item.product.price * item.quantity}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          ))
+        ) : (
+          <Typography>No orders available.</Typography>
+        )
       case 'addresses':
-        return addressesData.map((address) => (
-          <Box key={address.id} mb={2} p={2} bgcolor="white" sx={{ borderRadius: '8px', boxShadow: 1 }}>
-            <Typography><strong>Address:</strong> {address.address}</Typography>
-            <Typography><strong>Type:</strong> {address.type}</Typography>
-          </Box>
-        ));
-
+        return userDetails?.addresses?.length ? (
+          userDetails.addresses.map((address, index) => (
+            <Box
+              key={index}
+              mb={2}
+              p={2}
+              bgcolor='white'
+              sx={{ borderRadius: '8px', boxShadow: 1 }}
+            >
+              <Typography>
+                <strong>Address:</strong> {address?.city}
+              </Typography>
+              <Typography>
+                <strong>Home number:</strong> {address?.homeNumber}
+              </Typography>
+              <Typography>
+                <strong>Landmark:</strong> {address?.landmark}
+              </Typography>
+              <Typography>
+                <strong>Pincode:</strong> {address?.pinCode}
+              </Typography>
+              <Typography>
+                <strong>State:</strong> {address?.state}
+              </Typography>
+            </Box>
+          ))
+        ) : (
+          <Typography>No addresses available.</Typography>
+        )
       case 'settings':
         return (
-          <Box mb={2} p={2} bgcolor="white" sx={{ borderRadius: '8px', boxShadow: 1 }}>
-            <Typography>Update your account settings like password and email.</Typography>
+          <Box
+            mb={2}
+            p={2}
+            bgcolor='white'
+            sx={{ borderRadius: '8px', boxShadow: 1 }}
+          >
+            <Typography variant='h6' gutterBottom>
+              Update Account Details
+            </Typography>
+            <form
+              onSubmit={e => {
+                e.preventDefault()
+                updateUserDetails()
+              }}
+            >
+              <TextField
+                label='Full Name'
+                name='fullName'
+                value={updatedUserDetails.fullName}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+              />
+              <TextField
+                label='Email'
+                name='email'
+                value={updatedUserDetails.email}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+              />
+              <TextField
+                label='Phone Number'
+                name='phoneNumber'
+                value={updatedUserDetails.phoneNumber}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+              />
+              <TextField
+                label='City'
+                name='city'
+                value={updatedUserDetails.city}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+              />
+              <TextField
+                label='State'
+                name='state'
+                value={updatedUserDetails.state}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+              />
+              <TextField
+                label='Home Number'
+                name='homeNumber'
+                value={updatedUserDetails.homeNumber}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+              />
+              <TextField
+                label='Pin Code'
+                name='pinCode'
+                value={updatedUserDetails.pinCode}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+              />
+              <TextField
+                label='Landmark'
+                name='landmark'
+                value={updatedUserDetails.landmark}
+                onChange={handleInputChange}
+                fullWidth
+                margin='normal'
+              />
+              <Button type='submit' variant='contained' color='success'>
+                Update Details
+              </Button>
+            </form>
           </Box>
-        );
-
-      
-
+        )
       default:
-        return <Typography>Select an option from the menu to view details.</Typography>;
+        return (
+          <Typography>
+            Select an option from the menu to view details.
+          </Typography>
+        )
     }
-  };
+  }
 
   return (
-    <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} p={2}>
+    <Box
+      display='flex'
+      flexDirection={{ xs: 'column', md: 'row' }}
+      gap={2}
+      p={2}
+    >
       {/* Left Sidebar */}
-      <Box 
-        width={{ xs: '100%', md: '250px' }} 
-        bgcolor="#f7f7f7" 
+      <Box
+        width={{ xs: '100%', md: '250px' }}
+        bgcolor='#f0fdf4'
         p={2}
         sx={{ borderRadius: '8px', boxShadow: 1 }}
       >
-        <Avatar
-          alt="Chad Hamill"
-          src="https://i.pravatar.cc/150?img=3"
-          sx={{ width: 70, height: 70, mb: 2 }}
-        />
-        <Typography variant="h6" gutterBottom>Hello, Chad Hamill</Typography>
-        <Typography variant="h10" gutterBottom sx={{display:"flex", alignItems:"center", gap:2, mt:-2, mb:2}}>Joined on <p> 21/04/2024</p></Typography>
-        <List component="nav">
-          <ListItem button selected={selectedTab === 'overview'} onClick={() => setSelectedTab('overview')}>
-            <ListItemText primary="Overview" />
+        <List>
+          <ListItem
+            button
+            onClick={() => setSelectedTab('overview')}
+            sx={{ '&:hover': { backgroundColor: green[100] } }}
+          >
+            <ListItemIcon>
+              <SettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary='Overview' />
+          </ListItem>
+          <ListItem
+            button
+            onClick={() => setSelectedTab('orders')}
+            sx={{ '&:hover': { backgroundColor: green[100] } }}
+          >
+            <ListItemIcon>
+              <ShoppingCartIcon />
+            </ListItemIcon>
+            <ListItemText primary='Orders' />
+          </ListItem>
+          <ListItem
+            button
+            onClick={() => setSelectedTab('addresses')}
+            sx={{ '&:hover': { backgroundColor: green[100] } }}
+          >
+            <ListItemIcon>
+              <AddressIcon />
+            </ListItemIcon>
+            <ListItemText primary='Addresses' />
+          </ListItem>
+          <ListItem
+            button
+            onClick={() => setSelectedTab('settings')}
+            sx={{ '&:hover': { backgroundColor: green[100] } }}
+          >
+            <ListItemIcon>
+              <SettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary='Account Settings' />
           </ListItem>
           <Divider />
-          <ListItem button selected={selectedTab === 'orders'} onClick={() => setSelectedTab('orders')}>
-            <ListItemIcon><ShoppingCartIcon /></ListItemIcon>
-            <ListItemText primary="Orders" />
-          </ListItem>
-          <ListItem button selected={selectedTab === 'cart'} onClick={() => setSelectedTab('cart')}>
-            <ListItemIcon><ReviewsIcon /></ListItemIcon>
-            <ListItemText primary="Cart" />
-          </ListItem>
-          <ListItem button selected={selectedTab === 'wishlist'} onClick={() => setSelectedTab('wishlist')}>
-            <ListItemIcon><DownloadIcon /></ListItemIcon>
-            <ListItemText primary="Wishlist" />
-          </ListItem>
-          <ListItem button selected={selectedTab === 'returnRequests'} onClick={() => setSelectedTab('returnRequests')}>
-            <ListItemIcon><ReturnIcon /></ListItemIcon>
-            <ListItemText primary="Order Return Requests" />
-          </ListItem>
-          <ListItem button selected={selectedTab === 'addresses'} onClick={() => setSelectedTab('addresses')}>
-            <ListItemIcon><AddressIcon /></ListItemIcon>
-            <ListItemText primary="Addresses" />
-          </ListItem>
-          <ListItem button selected={selectedTab === 'settings'} onClick={() => setSelectedTab('settings')}>
-            <ListItemIcon><SettingsIcon /></ListItemIcon>
-            <ListItemText primary="Account Settings" />
-          </ListItem>
-      
-          <Divider />
-          <ListItem button>
-            <ListItemIcon><LogoutIcon /></ListItemIcon>
-            <ListItemText primary="Logout" />
+          <ListItem
+            button
+            onClick={() => handleLogout()}
+            sx={{ '&:hover': { backgroundColor: green[100] } }}
+          >
+            <ListItemIcon>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText primary='Logout' />
           </ListItem>
         </List>
       </Box>
 
-      {/* Main Content Area */}
-      <Box 
-        flexGrow={1} 
-        p={2} 
-        ml={{ md: 2 }} 
-        sx={{ backgroundColor: '#f0fdf4', borderRadius: '8px', boxShadow: 1, minHeight: '300px' }}
+      {/* Main Content */}
+      <Box
+        flexGrow={1}
+        p={2}
+        bgcolor='#f0fdf4'
+        sx={{ borderRadius: '8px', boxShadow: 1 }}
       >
         {renderContent()}
       </Box>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={900}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity='success'
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
-  );
-};
+  )
+}
 
-export default UserProfile;
+export default UserProfile

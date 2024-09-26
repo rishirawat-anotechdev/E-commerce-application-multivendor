@@ -4,6 +4,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert from '@mui/material/Alert'
 import api from '../../API/api'
+import { Link } from 'react-router-dom'
 
 // Snackbar Alert component
 const Alert = React.forwardRef(function Alert (props, ref) {
@@ -91,7 +92,7 @@ const ProductCard = ({ product }) => {
       <h3 className='font-bold'>{product.name}</h3>
       <div className='flex items-center mb-2'>
         <span className='text-yellow-400'>{'★'.repeat(product.rating)}</span>
-        <span className='text-gray-400 ml-1'>({product.numReviews})</span>
+        <span className='text-gray-400 ml-1'>({product.numReviews})</span> 
       </div>
       <div className='flex justify-between items-center mb-2'>
         <span className='font-bold text-[21px]'>
@@ -112,10 +113,12 @@ const ProductCard = ({ product }) => {
         </button>
         <div className='flex items-center space-x-2'>
           <FavoriteBorderIcon
-            className='hover:text-green-500 hover:text-[25px] ease-in-out duration-300'
+            className='hover:text-green-500 hover:text-[25px] ease-in-out duration-300 cursor-pointer'
             onClick={() => handleAddToFav()}
           />
-          <VisibilityIcon className='hover:text-green-500 hover:text-[25px] ease-in-out duration-100' />
+          <Link to={`/product/${product._id}`}>
+          <VisibilityIcon className='hover:text-green-500 hover:text-[25px] ease-in-out duration-100 cursor-pointer'   />
+          </Link>
         </div>
       </div>
 

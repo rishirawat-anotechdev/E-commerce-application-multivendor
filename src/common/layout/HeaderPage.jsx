@@ -34,11 +34,11 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 import CloseIcon from '@mui/icons-material/Close'
 import api from '../../API/api'
 import { AuthContext } from '../../auth/AuthContext'
-import LogoutIcon from '@mui/icons-material/Logout';
+import LogoutIcon from '@mui/icons-material/Logout'
+import LoginIcon from '@mui/icons-material/Login'
 const HeaderPage = () => {
   const { user, logout } = useContext(AuthContext)
- 
-  
+
   const [categories, setCategories] = useState([])
   const [showCategories, setShowCategories] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -52,13 +52,58 @@ const HeaderPage = () => {
   const [cart, setCart] = useState([])
   const [favorites, setFavorites] = useState([])
 
+  //Hover for dealy for dropdown
+  const [isFavoritesHovered, setIsFavoritesHovered] = useState(false)
+  const [isCartHovered, setIsCartHovered] = useState(false)
+  const [isProfileHovered, setIsProfileHovered] = useState(false)
+  const hoverTimeouts = {}
+
+  // Common delay duration (in milliseconds)
+  const delayDuration = 250
+
+  // Handlers for Favorites
+  const handleFavoritesMouseEnter = () => {
+    clearTimeout(hoverTimeouts['favorites'])
+    setIsFavoritesHovered(true)
+  }
+
+  const handleFavoritesMouseLeave = () => {
+    hoverTimeouts['favorites'] = setTimeout(() => {
+      setIsFavoritesHovered(false)
+    }, delayDuration)
+  }
+
+  // Handlers for Cart
+  const handleCartMouseEnter = () => {
+    clearTimeout(hoverTimeouts['cart'])
+    setIsCartHovered(true)
+  }
+
+  const handleCartMouseLeave = () => {
+    hoverTimeouts['cart'] = setTimeout(() => {
+      setIsCartHovered(false)
+    }, delayDuration)
+  }
+
+  // Handlers for Profile
+  const handleProfileMouseEnter = () => {
+    clearTimeout(hoverTimeouts['profile'])
+    setIsProfileHovered(true)
+  }
+
+  const handleProfileMouseLeave = () => {
+    hoverTimeouts['profile'] = setTimeout(() => {
+      setIsProfileHovered(false)
+    }, delayDuration)
+  }
+
   //Logout and profile
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');  // Redirect to login after logout
-  };
+    logout()
+    navigate('/login') // Redirect to login after logout
+  }
 
   useEffect(() => {
     const controlHeader = () => {
@@ -140,7 +185,21 @@ const HeaderPage = () => {
           <ListItemText primary='Compare' sx={{ ml: 2 }} />
         </ListItem>
         <ListItem button>
-          <Badge badgeContent={3} color='secondary'>
+          <Badge
+            badgeContent={favorites.length}
+            color='primary'
+            sx={{
+              '& .MuiBadge-dot': {
+                backgroundColor: '#38a169'
+              },
+              '& .MuiBadge-standard': {
+                backgroundColor: '#38a169'
+              },
+              '& .MuiBadge-dot, & .MuiBadge-standard': {
+                color: 'white'
+              }
+            }}
+          >
             <FavoriteBorder />
           </Badge>
           <ListItemText primary='Wishlist' sx={{ ml: 2 }} />
@@ -160,39 +219,64 @@ const HeaderPage = () => {
           </Typography>
         </Box>
       </Box>
-      <Box
-        sx={{
-          mt: 'auto',
-          p: 2,
-          display: 'flex',
-          alignItems: 'center',
-          borderTop: '1px solid #e0e0e0'
-        }}
-      >
-        <Avatar sx={{ bgcolor: '#38a169', mr: 2 }}>P</Avatar>
-        <Link to={'/userProfile'}>
-          {' '}
-          <Typography variant='body1'>Profile</Typography>
-        </Link>
-      </Box>
-      <Box 
-      sx={{
-          mt: 'auto',
-          p: 2,
-          display: 'flex',
-          alignItems: 'center',
-          borderTop: '1px solid #e0e0e0'
-        }}>
+      {user ? (
+        <Box
+          sx={{
+            mt: 'auto',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            borderTop: '1px solid #e0e0e0'
+          }}
+        >
+          <Avatar sx={{ bgcolor: '#38a169', mr: 2 }}>P</Avatar>
+          <Link to={`/userProfile/${user?.id}`}>
+            {' '}
+            <Typography variant='body1'>Profile</Typography>
+          </Link>
+        </Box>
+      ) : (
+        ''
+      )}
+
+      {user ? (
+        <Box
+          sx={{
+            mt: 'auto',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            borderTop: '1px solid #e0e0e0'
+          }}
+        >
           <LogoutIcon sx={{ fontSize: 40, color: '#38a169', mr: 1 }} />
-        
-      <Typography variant='body1'   onClick={handleLogout}>Logout</Typography>
-      </Box>
+
+          <Typography variant='body1' onClick={handleLogout}>
+            Logout
+          </Typography>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            mt: 'auto',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            borderTop: '1px solid #e0e0e0'
+          }}
+        >
+          <LoginIcon sx={{ fontSize: 40, color: '#38a169', mr: 1 }} />
+
+          <Typography variant='body1' onClick={handleLogout}>
+            Login
+          </Typography>
+        </Box>
+      )}
     </Box>
   )
 
   // Fetch categories from API
   const fetchCategories = async () => {
-   
     try {
       const response = await api.get('/category')
       setCategories(response.data) // Set categories from response
@@ -250,6 +334,7 @@ const HeaderPage = () => {
     fetchCartData()
     fetchFavData()
   }, []) // Fetch cart data once on mount
+
   return (
     <>
       <PromoBanner />
@@ -382,167 +467,196 @@ const HeaderPage = () => {
                 </Badge>
               </IconButton>
 
-              {/* fav */}
-              <div className='relative group'>
-                {/* Favorites Icon */}
-                <IconButton color='inherit'>
-                  <Badge
-                    badgeContent={favorites.length} // Show count of favorite items
-                    color='primary'
-                    sx={{
-                      '& .MuiBadge-dot': {
-                        backgroundColor: '#38a169' // Green color
-                      },
-                      '& .MuiBadge-standard': {
-                        backgroundColor: '#38a169' // Green color
-                      },
-                      '& .MuiBadge-dot, & .MuiBadge-standard': {
-                        color: 'white'
-                      }
-                    }}
+              <div className='flex space-x-6'>
+                {/* Favorites */}
+                <div
+                  className='relative group'
+                  onMouseEnter={handleFavoritesMouseEnter}
+                  onMouseLeave={handleFavoritesMouseLeave}
+                >
+                  <IconButton color='inherit'>
+                    <Badge
+                      badgeContent={favorites.length}
+                      color='primary'
+                      sx={{
+                        '& .MuiBadge-dot': {
+                          backgroundColor: '#38a169'
+                        },
+                        '& .MuiBadge-standard': {
+                          backgroundColor: '#38a169'
+                        },
+                        '& .MuiBadge-dot, & .MuiBadge-standard': {
+                          color: 'white'
+                        }
+                      }}
+                    >
+                      <FavoriteBorder />
+                    </Badge>
+                  </IconButton>
+
+                  <div
+                    className={`absolute right-0 mt-2 w-[300px] bg-white rounded-md shadow-lg transition-opacity duration-500 z-10 ${
+                      isFavoritesHovered
+                        ? 'opacity-100 pointer-events-auto'
+                        : 'opacity-0 pointer-events-none'
+                    }`}
                   >
-                    <FavoriteBorder />
-                  </Badge>
-                </IconButton>
-
-                {/* Favorites Dropdown */}
-                <div className='absolute right-0 mt-2 w-[300px] bg-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none group-hover:pointer-events-auto z-10'>
-                  <div className='p-4 max-h-96 scrollbar-hide overflow-y-auto'>
-                    {favorites.length === 0 ? (
-                      <p className='text-center text-gray-500'>
-                        No items in favorites
-                      </p>
-                    ) : (
-                      favorites.map(item => (
-                        <div
-                          key={item._id}
-                          className='flex items-center mb-4 last:mb-0'
-                        >
-                          <img
-                            src={item.image[0]} // Get the first image from the product array
-                            alt={item.name}
-                            className='w-12 h-12 object-cover mr-3'
-                          />
-                          <div className='flex-grow'>
-                            <p className='text-sm font-medium'>{item.name}</p>
-                            <p className='text-xs text-gray-500'>
-                              ${item.price.toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* cart items  */}
-              <div className='relative group'>
-                <button className='p-2 text-gray-600 hover:text-gray-800'>
-                  <div className='relative'>
-                    <Link to={'/cart'}>
-                      <ShoppingCartIcon size={24} />
-                    </Link>
-                    <span className='absolute -top-2 -right-2 bg-[#38a169] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
-                      {cart.length} {/* Display number of items in cart */}
-                    </span>
-                  </div>
-                </button>
-
-                <div className='absolute right-0 mt-2 w-[300px] bg-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none group-hover:pointer-events-auto z-10'>
-                  <div className='p-4 max-h-96 scrollbar-hide overflow-y-auto'>
-                    {cart.length === 0 ? ( // Check if the cart is empty
-                      <p className='text-center text-gray-500'>
-                        No items in cart
-                      </p> // Display message if cart is empty
-                    ) : (
-                      cart.map(item => (
-                        <div
-                          key={item._id}
-                          className='flex items-center mb-4 last:mb-0'
-                        >
-                          <img
-                            src={item.product.image[0]} // Get the first image from the product array
-                            alt={item.product.name}
-                            className='w-12 h-12 object-cover mr-3'
-                          />
-                          <div className='flex-grow'>
-                            <p className='text-sm font-medium'>
-                              {item.product.name}
-                            </p>
-                            <p className='text-xs text-gray-500'>
-                              {item.quantity} x ${item.product.price.toFixed(2)}
-                            </p>
-                          </div>
-                          <button
-                            className='text-gray-400 hover:text-gray-600'
-                            onClick={() =>
-                              removeProductFromCart(item?.product._id)
-                            }
+                    <div className='p-4 max-h-96 scrollbar-hide overflow-y-auto'>
+                      {favorites.length === 0 ? (
+                        <p className='text-center text-gray-500'>
+                          No items in favorites
+                        </p>
+                      ) : (
+                        favorites.map(item => (
+                          <div
+                            key={item._id}
+                            className='flex items-center mb-4 last:mb-0'
                           >
-                            <CloseIcon />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <div className='p-4 border-t'>
-                    <Link to={'/cart'}>
-                      <button className='w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-150'>
-                        View Cart
-                      </button>
-                    </Link>
+                            <img
+                              src={item.image[0]}
+                              alt={item.name}
+                              className='w-12 h-12 object-cover mr-3'
+                            />
+                            <div className='flex-grow'>
+                              <p className='text-sm font-medium'>{item.name}</p>
+                              <p className='text-xs text-gray-500'>
+                                ${item.price.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* user profile */}
-              <nav>
-      <ul className="flex items-center space-x-4">
-        <li className="relative group">
-          {/* Profile icon */}
-          <button className="focus:outline-none">
-            <AccountCircle className="text-md" />
-          </button>
-          {/* Dropdown menu (hover to show) */}
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none group-hover:pointer-events-auto z-10">
-            <div className="py-1">
-              {user ? (
-                <>
-                  <Link
-                    to="/userProfile"
-                    className="block px-4 py-2 text-gray-800 hover:bg-green-100"
-                  >
-                    Profile
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-green-100"
-                  >
-                    Logout
+                {/* Cart */}
+                <div
+                  className='relative group'
+                  onMouseEnter={handleCartMouseEnter}
+                  onMouseLeave={handleCartMouseLeave}
+                >
+                  <button className='p-2 text-gray-600 hover:text-gray-800'>
+                    <div className='relative'>
+                      <Link to={'/cart'}>
+                        <ShoppingCartIcon size={24} />
+                      </Link>
+                      <span className='absolute -top-2 -right-2 bg-[#38a169] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center'>
+                        {cart.length}
+                      </span>
+                    </div>
                   </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="block px-4 py-2 text-gray-800 hover:bg-green-100"
+
+                  <div
+                    className={`absolute right-0 mt-2 w-[300px] bg-white rounded-md shadow-lg transition-opacity duration-500 z-10 ${
+                      isCartHovered
+                        ? 'opacity-100 pointer-events-auto'
+                        : 'opacity-0 pointer-events-none'
+                    }`}
                   >
-                    Login
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="block px-4 py-2 text-gray-800 hover:bg-green-100"
-                  >
-                    Register
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </li>
-      </ul>
-    </nav>
+                    <div className='p-4 max-h-96 scrollbar-hide overflow-y-auto'>
+                      {cart.length === 0 ? (
+                        <p className='text-center text-gray-500'>
+                          No items in cart
+                        </p>
+                      ) : (
+                        cart.map(item => (
+                          <div
+                            key={item._id}
+                            className='flex items-center mb-4 last:mb-0'
+                          >
+                            <img
+                              src={item.product.image[0]}
+                              alt={item.product.name}
+                              className='w-12 h-12 object-cover mr-3'
+                            />
+                            <div className='flex-grow'>
+                              <p className='text-sm font-medium'>
+                                {item.product.name}
+                              </p>
+                              <p className='text-xs text-gray-500'>
+                                {item.quantity} x $
+                                {item.product.price.toFixed(2)}
+                              </p>
+                            </div>
+                            <button
+                              className='text-gray-400 hover:text-gray-600'
+                              onClick={() =>
+                                removeProductFromCart(item?.product._id)
+                              }
+                            >
+                              <CloseIcon />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className='p-4 border-t'>
+                      <Link to={'/cart'}>
+                        <button className='w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-150'>
+                          View Cart
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile */}
+                <nav>
+                  <ul className='flex p-2 items-center space-x-4'>
+                    <li
+                      className='relative group'
+                      onMouseEnter={handleProfileMouseEnter}
+                      onMouseLeave={handleProfileMouseLeave}
+                    >
+                      <button className='focus:outline-none'>
+                        <AccountCircle size={24} className='text-md' />
+                      </button>
+                      <div
+                        className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg transition-opacity duration-500 z-10 ${
+                          isProfileHovered
+                            ? 'opacity-100 pointer-events-auto'
+                            : 'opacity-0 pointer-events-none'
+                        }`}
+                      >
+                        <div className='py-1'>
+                          {user ? (
+                            <>
+                              <Link
+                                to={`/userProfile/${user?.id}`}
+                                className='block px-4 py-2 text-gray-800 hover:bg-green-100'
+                              >
+                                Profile
+                              </Link>
+                              <button
+                                onClick={handleLogout}
+                                className='block w-full text-left px-4 py-2 text-gray-800 hover:bg-green-100'
+                              >
+                                Logout
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                to='/login'
+                                className='block px-4 py-2 text-gray-800 hover:bg-green-100'
+                              >
+                                Login
+                              </Link>
+                              <Link
+                                to='/register'
+                                className='block px-4 py-2 text-gray-800 hover:bg-green-100'
+                              >
+                                Register
+                              </Link>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
             </Box>
           )}
         </Toolbar>

@@ -7,6 +7,7 @@ import { Box, CircularProgress } from '@mui/material';
 import GuestRoute from './auth/GuestRoute';
 import RedirectIfAuthenticated from './auth/GuestRoute';
 import UserProfile from './components/Userprofile';
+import SingleProduct from './components/AllProducts/SingleProduct';
 
 
 
@@ -81,32 +82,34 @@ const App = () => {
         {/* Public routes */}
         <Route path="/" element={<LayoutPage><HomePage /></LayoutPage>} />
         <Route path="/homepage" element={<LayoutPage><HomePage /></LayoutPage>} />
+        <Route path="/product/:productId" element={<LayoutPage><SingleProduct /></LayoutPage>} />
         {/* Protected routes that require login */}
         <Route element={<ProtectedRoute allowedRoles={['User']} />}>
           <Route path="/cart" element={<LayoutPage><CartPage /></LayoutPage>} />
           <Route path="/checkout/:userId" element={<LayoutPage><CheckoutForm /></LayoutPage>} />
-          <Route path="/userProfile" element={<LayoutPage><UserProfile /></LayoutPage>} />
-         
-          
+          <Route path="/userProfile/:userId" element={<LayoutPage><UserProfile /></LayoutPage>} />
+
+
         </Route>
+       
 
         <Route
-  path="/login"
-  element={
-    <RedirectIfAuthenticated>
-      <LayoutPage><LoginPage /></LayoutPage>
-    </RedirectIfAuthenticated>
-  }
-/>
+          path="/login"
+          element={
+            <RedirectIfAuthenticated>
+              <LayoutPage><LoginPage /></LayoutPage>
+            </RedirectIfAuthenticated>
+          }
+        />
 
-<Route
-  path="/register"
-  element={
-    <RedirectIfAuthenticated>
-      <LayoutPage><RegisterPage /></LayoutPage>
-    </RedirectIfAuthenticated>
-  }
-/>
+        <Route
+          path="/register"
+          element={
+            <RedirectIfAuthenticated>
+              <LayoutPage><RegisterPage /></LayoutPage>
+            </RedirectIfAuthenticated>
+          }
+        />
 
         {/* Admin protected routes */}
         <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>

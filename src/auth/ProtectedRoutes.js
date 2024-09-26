@@ -4,6 +4,8 @@ import { AuthContext } from './AuthContext';
 
 const ProtectedRoute = ({ allowedRoles }) => {
   const { user, role, loading } = useContext(AuthContext);
+  
+  
   const location = useLocation();
 
   if (loading) return null;  // Show loading spinner if needed
