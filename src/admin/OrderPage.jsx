@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -10,7 +10,6 @@ import {
   Table,
   TableBody,
   TableCell,
-
   TableHead,
   TableRow,
   Paper,
@@ -18,30 +17,23 @@ import {
   Typography,
   Chip,
   TablePagination,
-
   TableContainer
 } from '@mui/material';
-
-// Fake Data
-const rows = [
-  { id: 1, name: 'John Doe', email: 'john@example.com', amount: 2109, paymentMethod: 'Mollie', paymentStatus: 'Completed', status: 'Completed', taxAmount: 0 },
-  { id: 2, name: 'Jane Smith', email: 'jane@example.com', amount: 1370, paymentMethod: 'Paystack', paymentStatus: 'Completed', status: 'Completed', taxAmount: 0 },
-  { id: 3, name: 'Adam Johnson', email: 'adam@example.com', amount: 6300, paymentMethod: 'PayPal', paymentStatus: 'Completed', status: 'Completed', taxAmount: 0 },
-  { id: 4, name: 'Test User', email: 'test@example.com', amount: 5000, paymentMethod: 'Stripe', paymentStatus: 'Pending', status: 'Pending', taxAmount: 0 },
-];
+import api from '../API/api';
 
 // Payment and Status Chips
 const getStatusChip = (status) => {
-  const color = status === 'Completed' ? 'success' : 'warning';
+  const color = status === 'Paid' ? 'success' : 'warning';
   return <Chip label={status} color={color} />;
 };
 
 const getPaymentStatusChip = (status) => {
-  const color = status === 'Completed' ? 'success' : status === 'Pending' ? 'warning' : 'error';
+  const color = status === 'Paid' ? 'success' : status === 'Pending' ? 'warning' : 'error';
   return <Chip label={status} color={color} />;
 };
 
 const OrderPage = () => {
+  const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState({
     field: '',
     value: '',
@@ -49,12 +41,22 @@ const OrderPage = () => {
     amountCondition: '',
     amount: '',
   });
-
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  // Get the filtered rows for the current page
+  // Get orders API
+  const getOrderData = async () => {
+    try {
+      const response = await api.get('admin/orders', { withCredentials: true });
+      setOrders(response.data.orders); // Store the API data in state
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
+  useEffect(() => {
+    getOrderData(); // Fetch order data on component mount
+  }, []);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -70,45 +72,45 @@ const OrderPage = () => {
     setFilter((prev) => ({ ...prev, [name]: value }));
   };
 
-  const filteredRows = rows
-  .filter((row) => {
-    // Apply filter conditions based on filter state
-    let valid = true;
+  // Get the filtered rows for the current page
+  const filteredOrders = orders
+    .filter((order) => {
+      let valid = true;
 
-    // Filter by field (Name, Email, Amount)
-    if (filter.field === 'name' && filter.value && !row.name.toLowerCase().includes(filter.value.toLowerCase())) {
-      valid = false;
-    }
-    if (filter.field === 'email' && filter.value && !row.email.toLowerCase().includes(filter.value.toLowerCase())) {
-      valid = false;
-    }
-    if (filter.field === 'amount' && filter.value && row.amount !== parseFloat(filter.value)) {
-      valid = false;
-    }
+      // Filter by field (Name, Email)
+      if (filter.field === 'name' && filter.value && !order.user.fullName.toLowerCase().includes(filter.value.toLowerCase())) {
+        valid = false;
+      }
+      if (filter.field === 'email' && filter.value && !order.user.email.toLowerCase().includes(filter.value.toLowerCase())) {
+        valid = false;
+      }
 
-    // Filter by Payment Status
-    if (filter.paymentStatus && row.paymentStatus !== filter.paymentStatus) {
-      valid = false;
-    }
+      // Filter by Payment Status
+      if (filter.paymentStatus && order.paymentStatus !== filter.paymentStatus) {
+        valid = false;
+      }
 
-    // Filter by Amount Condition
-    if (filter.amountCondition === 'greater' && row.amount <= parseFloat(filter.amount)) {
-      valid = false;
-    }
-    if (filter.amountCondition === 'less' && row.amount >= parseFloat(filter.amount)) {
-      valid = false;
-    }
+      // Filter by Amount Condition
+      if (filter.amountCondition === 'greater' && order.totalPrice <= parseFloat(filter.amount)) {
+        valid = false;
+      }
+      if (filter.amountCondition === 'less' && order.totalPrice >= parseFloat(filter.amount)) {
+        valid = false;
+      }
 
-    return valid;
-  })
-  // Apply pagination to the filtered rows
-  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+      // Filter by Exact Amount if no condition
+      if (!filter.amountCondition && filter.amount && order.totalPrice !== parseFloat(filter.amount)) {
+        valid = false;
+      }
 
+      return valid;
+    })
+    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Box sx={{py: { xs: 1, sm: 2 } , mt: 2, }}>
+    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
       {/* Filter Box */}
-      <Box mb={4} p={3} sx={{  borderRadius: 2, backgroundColor: '#fff' }}>
+      <Box mb={4} p={3} sx={{ borderRadius: 2, backgroundColor: '#fff' }}>
         <Typography variant="h6" mb={2}>Filters</Typography>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={4}>
@@ -122,7 +124,6 @@ const OrderPage = () => {
               >
                 <MenuItem value="name">Name</MenuItem>
                 <MenuItem value="email">Email</MenuItem>
-             
               </Select>
             </FormControl>
           </Grid>
@@ -146,7 +147,7 @@ const OrderPage = () => {
                 onChange={handleFilterChange}
               >
                 <MenuItem value="">All</MenuItem>
-                <MenuItem value="Completed">Completed</MenuItem>
+                <MenuItem value="Paid">Paid</MenuItem>
                 <MenuItem value="Pending">Pending</MenuItem>
               </Select>
             </FormControl>
@@ -178,19 +179,21 @@ const OrderPage = () => {
           </Grid>
 
           <Grid item xs={12} sm={4}>
-            <Button variant="contained" fullWidth>Apply</Button>
+            <Button variant="contained" fullWidth sx={{py:1.8}}>Apply</Button>
           </Grid>
         </Grid>
       </Box>
 
       {/* Table */}
       <TableContainer component={Paper} mt={2}>
-      
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>
-                <Typography fontWeight="bold">ID</Typography>
+                <Typography fontWeight="bold">SR No.</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography fontWeight="bold">Order ID</Typography>
               </TableCell>
               <TableCell>
                 <Typography fontWeight="bold">Name</Typography>
@@ -208,35 +211,31 @@ const OrderPage = () => {
                 <Typography fontWeight="bold">Payment Status</Typography>
               </TableCell>
               <TableCell>
-                <Typography fontWeight="bold">Status</Typography>
-              </TableCell>
-              <TableCell>
-                <Typography fontWeight="bold">Tax Amount</Typography>
+                <Typography fontWeight="bold">Order Status</Typography>
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredRows.map((row, index) => (
-              <TableRow key={row.id} style={{ backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white' }}>
-                <TableCell>{row.id}</TableCell>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.email}</TableCell>
-                <TableCell>${row.amount.toFixed(2)}</TableCell>
-                <TableCell>{row.paymentMethod}</TableCell>
-                <TableCell>{getPaymentStatusChip(row.paymentStatus)}</TableCell>
-                <TableCell>{getStatusChip(row.status)}</TableCell>
-                <TableCell>${row.taxAmount.toFixed(2)}</TableCell>
+            {filteredOrders.map((order, index) => (
+              <TableRow key={order._id} style={{ backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white' }}>
+                <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                <TableCell>{order._id}</TableCell>
+                <TableCell>{order.user.fullName}</TableCell>
+                <TableCell>{order.user.email}</TableCell>
+                <TableCell>${order.totalPrice.toFixed(2)}</TableCell>
+                <TableCell>{order.razorpayOrderId}</TableCell>
+                <TableCell>{getPaymentStatusChip(order.paymentStatus)}</TableCell>
+                <TableCell>{getStatusChip(order.paymentStatus)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-     
 
       {/* Pagination Component */}
       <TablePagination
         component="div"
-        count={rows.length}
+        count={orders.length}
         page={page}
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
@@ -246,7 +245,6 @@ const OrderPage = () => {
         labelDisplayedRows={({ from, to, count }) => `Showing from ${from} to ${to} of ${count}`}
       />
     </Box>
- 
   );
 };
 

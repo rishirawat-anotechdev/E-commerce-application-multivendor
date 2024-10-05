@@ -1,110 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  IconButton, TextField,  Box , TablePagination,
-  Paper
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  IconButton, TextField, Box, TablePagination,
+  Paper,
+  Chip
 } from '@mui/material';
 import { Delete, Visibility } from '@mui/icons-material';
 import Rating from '@mui/material/Rating';
-
-const reviewsData = [
-  {
-    id: 884,
-    product: { name: 'Haagen-Dazs Caramel Cone Ice Cream', link: '/products/884' },
-    user: { name: 'Adela Rowe PhD', link: '/users/1' },
-    star: 3,
-    comment: 'As a developer I reviewed this script. This is really awesome ecommerce...',
-    images: ['img1.jpg'],
-    status: 'Published',
-    createdAt: '2024-07-22'
-  },
-  {
-    id: 877,
-    product: { name: 'Simply Lemonade with Raspberry Juice', link: '/products/877' },
-    user: { name: 'Mae West', link: '/users/2' },
-    star: 4,
-    comment: 'Cool template. Excellent code quality. The support responds very quick...',
-    images: ['img3.jpg'],
-    status: 'Published',
-    createdAt: '2024-07-22'
-  },
-  // Add more data here
-];
+import api from '../API/api';
 
 const ReviewsPage = () => {
+  const [reviewsData, setReviewsData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [totalReviews, setTotalReviews] = useState(0);
 
+  // Fetch reviews from the API
+  const getReviewData = async () => {
+    try {
+      const response = await api.get('/admin/reviews', {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setReviewsData(response.data.reviews);
+        setTotalReviews(response.data.totalReviews);
+      }
+    } catch (error) {
+      console.error('Failed to fetch reviews:', error);
+    }
+  };
+
+  useEffect(() => {
+    getReviewData();
+  }, []);
+
+  // Handle search
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  const filteredReviews = reviewsData.filter(review =>
-    review.user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter reviews based on the search term
+  const filteredReviews = reviewsData.filter((review) =>
+    review.product.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Handle page change
   const handlePageChange = (event, newPage) => {
     setPage(newPage);
   };
 
+  // Handle rows per page change
   const handleRowsPerPageChange = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  const displayedReviews = filteredReviews.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // Paginate displayed reviews
+  const displayedReviews = filteredReviews.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   return (
-    <Box  sx={{ py: { xs: 1, sm: 2 }, mt: 2,   }}>
-     
-     <Box sx={{p:4, backgroundColor:"white"}}>
-     <TextField
-        label="Search by Username"
-        variant="outlined"
-        fullWidth
-        value={searchTerm}
-        onChange={handleSearch}
-        margin="normal"
-      />
-     </Box>
-   
-      <TableContainer component={Paper} sx={{mt:4}} >
+    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
+      <Box sx={{ p: 4, backgroundColor: 'white' }}>
+        <TextField
+          label="Search by User Email"
+          variant="outlined"
+          fullWidth
+          value={searchTerm}
+          onChange={handleSearch}
+          margin="normal"
+        />
+      </Box>
+
+      <TableContainer component={Paper} sx={{ mt: 4 }}>
         <Table>
           <TableHead>
             <TableRow>
+            <TableCell>Sr No</TableCell>
               <TableCell>ID</TableCell>
               <TableCell>Product</TableCell>
               <TableCell>User</TableCell>
-              <TableCell>Star</TableCell>
+              <TableCell>Rating</TableCell>
               <TableCell>Comment</TableCell>
-              <TableCell>Images</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Created At</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>Operations</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {displayedReviews.map((review) => (
-              <TableRow key={review.id} style={{ backgroundColor: review.id % 2 === 0 ? '#f6f8fb' : 'white' }}>
-                <TableCell>{review.id}</TableCell>
+            {displayedReviews.map((review, index) => (
+              <TableRow key={review._id} style={{ backgroundColor: review._id % 2 === 0 ? '#f6f8fb' : 'white' }}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{review._id}</TableCell>
+                <TableCell>{review.product}</TableCell>
+                <TableCell>{review.user.email}</TableCell>
                 <TableCell>
-                  <a href={review.product.link}>{review.product.name}</a>
-                </TableCell>
-                <TableCell>
-                  <a href={review.user.link}>{review.user.name}</a>
-                </TableCell>
-                <TableCell>
-                  <Rating name="read-only" value={review.star} readOnly />
+                  <Rating name="read-only" value={review.rating} readOnly />
                 </TableCell>
                 <TableCell>{review.comment}</TableCell>
-                <TableCell>
-                  {review.images.map((image, index) => (
-                    <img key={index} src={image} alt={`img${index + 1}`} style={{ width: '50px', marginRight: '5px' }} />
-                  ))}
-                </TableCell>
-                <TableCell>{review.status}</TableCell>
-                <TableCell>{review.createdAt}</TableCell>
+              <TableCell>
+              <Chip
+                    label={review.status || 'Published'}
+                    color={review.status === 'Pending' ? 'warning' : 'success'}
+                  />
+              </TableCell>
+                <TableCell>{new Date(review.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap' }}>
                   <IconButton aria-label="view">
                     <Visibility />
@@ -118,10 +121,11 @@ const ReviewsPage = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={filteredReviews.length}
+        count={totalReviews}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handlePageChange}

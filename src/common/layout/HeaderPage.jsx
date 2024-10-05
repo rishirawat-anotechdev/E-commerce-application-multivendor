@@ -50,6 +50,7 @@ const HeaderPage = () => {
   const [lastScrollY, setLastScrollY] = useState(0)
 
   const [cart, setCart] = useState([])
+  console.log(cart, 'cart')
   const [favorites, setFavorites] = useState([])
 
   //Hover for dealy for dropdown
@@ -405,26 +406,35 @@ const HeaderPage = () => {
                   ) : (
                     cart.map(item => (
                       <div
-                        key={item._id}
+                        key={item?._id}
                         className='flex items-center mb-4 last:mb-0'
                       >
                         <img
-                          src={item.product.image[0]} // Get the first image from the product array
-                          alt={item.product.name}
+                          src={
+                            item?.product?.image?.length > 0
+                              ? item.product.image[0]
+                              : 'default-image-url'
+                          } // Check if the image array exists and has elements
+                          alt={item?.product?.name || 'Product Image'} // Add a fallback for the alt attribute
                           className='w-12 h-12 object-cover mr-3'
                         />
                         <div className='flex-grow'>
                           <p className='text-sm font-medium'>
-                            {item.product.name}
+                            {item?.product?.name || 'Unnamed Product'}{' '}
+                            {/* Fallback if name is missing */}
                           </p>
                           <p className='text-xs text-gray-500'>
-                            {item.quantity} x ${item.product.price.toFixed(2)}
+                            {item?.quantity} x $
+                            {item?.product?.price
+                              ? item.product.price.toFixed(2)
+                              : '0.00'}{' '}
+                            {/* Fallback if price is missing */}
                           </p>
                         </div>
                         <button
                           className='text-gray-400 hover:text-gray-600'
                           onClick={() =>
-                            removeProductFromCart(item?.product._id)
+                            removeProductFromCart(item?.product?._id)
                           }
                         >
                           <CloseIcon />
@@ -433,6 +443,7 @@ const HeaderPage = () => {
                     ))
                   )}
                 </div>
+
                 <div className='p-4 border-t'>
                   <Link to={'/cart'}>
                     <button className='w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-150'>
@@ -555,34 +566,42 @@ const HeaderPage = () => {
                     }`}
                   >
                     <div className='p-4 max-h-96 scrollbar-hide overflow-y-auto'>
-                      {cart.length === 0 ? (
+                      {cart.length === 0 ? ( // Check if the cart is empty
                         <p className='text-center text-gray-500'>
                           No items in cart
-                        </p>
+                        </p> // Display message if cart is empty
                       ) : (
                         cart.map(item => (
                           <div
-                            key={item._id}
+                            key={item?._id}
                             className='flex items-center mb-4 last:mb-0'
                           >
                             <img
-                              src={item.product.image[0]}
-                              alt={item.product.name}
+                              src={
+                                item?.product?.image?.length > 0
+                                  ? item.product.image[0]
+                                  : 'default-image-url'
+                              } // Check if the image array exists and has elements
+                              alt={item?.product?.name || 'Product Image'} // Add a fallback for the alt attribute
                               className='w-12 h-12 object-cover mr-3'
                             />
                             <div className='flex-grow'>
                               <p className='text-sm font-medium'>
-                                {item.product.name}
+                                {item?.product?.name || 'Unnamed Product'}{' '}
+                                {/* Fallback if name is missing */}
                               </p>
                               <p className='text-xs text-gray-500'>
-                                {item.quantity} x $
-                                {item.product.price.toFixed(2)}
+                                {item?.quantity} x $
+                                {item?.product?.price
+                                  ? item.product.price.toFixed(2)
+                                  : '0.00'}{' '}
+                                {/* Fallback if price is missing */}
                               </p>
                             </div>
                             <button
                               className='text-gray-400 hover:text-gray-600'
                               onClick={() =>
-                                removeProductFromCart(item?.product._id)
+                                removeProductFromCart(item?.product?._id)
                               }
                             >
                               <CloseIcon />
@@ -591,6 +610,7 @@ const HeaderPage = () => {
                         ))
                       )}
                     </div>
+
                     <div className='p-4 border-t'>
                       <Link to={'/cart'}>
                         <button className='w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-150'>

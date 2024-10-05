@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, useContext, useEffect, useState } from 'react'
 import {
   AppBar,
   Toolbar,
@@ -12,7 +12,8 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
-  Badge
+  Badge,
+  CircularProgress
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import '../index.css'
@@ -23,6 +24,22 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import { Link, Outlet, useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import AddBusinessIcon from '@mui/icons-material/AddBusiness'
+import api from '../API/api'
+import { AuthContext } from '../auth/AuthContext'
+
+// Loading fallback for lazy loading
+export const LoadingFallback = () => (
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh'
+    }}
+  >
+    <CircularProgress />
+  </Box>
+)
 const navLinks = [
   {
     text: 'Dashboard',
@@ -75,12 +92,47 @@ const navLinks = [
 ]
 
 const VendorLayout = () => {
+  const { user } = useContext(AuthContext)
+
+  // console.log("user",user);
+
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [currentRoute, setCurrentRoute] = useState('Dashboard')
+  const [orderData, setOrderData] = useState()
+  const [userDetails, setUserDetails] = useState()
+  console.log('data', userDetails)
+
   const drawerWidth = sidebarOpen ? 380 : 0
+
+  // get balance
+  const getOrders = async () => {
+    try {
+      const response = await api.get('/vendor/orders', {
+        withCredentials: true
+      })
+      //  console.log(response.data);
+
+      setOrderData(response.data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  // get Userdetails
+  const getUserDetails = async () => {
+    try {
+      const response = await api.get(`users/profile/${user.id}`, {
+        withCredentials: true
+      })
+      //  console.log(response.data);
+      setUserDetails(response.data.user)
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -129,10 +181,15 @@ const VendorLayout = () => {
               fontSize: '1.3rem'
             }}
           >
-            <Link to={'/vendor/profile'}>Hello, Linda Bashirian</Link>
+            <Link to={'/vendor/profile'}>Hello, {userDetails?.fullName}</Link>
           </Typography>
           <Typography variant='body2' sx={{ color: 'black', fontSize: '1rem' }}>
-            Joined on Sep 15, 2024
+            Joined on{' '}
+            {new Date(userDetails?.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
           </Typography>
           <Typography
             variant='body2'
@@ -143,14 +200,18 @@ const VendorLayout = () => {
               cursor: 'pointer'
             }}
           >
-            <AddBusinessIcon /> View your store
+            <AddBusinessIcon />
+            <Link to={'/'}>View your store</Link>
           </Typography>
         </Box>
         <Box mb={2} mt={1} mr={9}>
           <Typography sx={{ color: '#666666', fontWeight: 'bold' }}>
             Balance
           </Typography>
-          <h1 className='text-3xl  text-black'>$34,617.00</h1>
+          <h1 className='text-3xl  text-black'>
+            {' '}
+            {`$${orderData?.totalPaidRevenue + orderData?.totalPendingRevenue}`}
+          </h1>
         </Box>
       </Box>
 
@@ -168,7 +229,7 @@ const VendorLayout = () => {
               backgroundColor: selectedIndex === index ? '#206bc4' : 'inherit',
               '&:hover': {
                 backgroundColor: '#206bc4',
-                color:"#fff"
+                color: '#fff'
               }
             }}
           >
@@ -185,8 +246,7 @@ const VendorLayout = () => {
                   color: 'black',
                   fontSize: { xs: '16px', sm: '20px' },
                   fontWeight: 'bold',
-                  whiteSpace: 'nowrap',
-                
+                  whiteSpace: 'nowrap'
                 }}
               />
             )}
@@ -211,6 +271,11 @@ const VendorLayout = () => {
     // If no specific route, default to 'DASHBOARD'
     setCurrentRoute(uppercaseRoute || 'DASHBOARD')
   }, [window.location.pathname])
+
+  useEffect(() => {
+    getOrders()
+    getUserDetails()
+  }, [])
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -266,9 +331,11 @@ const VendorLayout = () => {
           {/* Hide profile on small screens */}
 
           <Box ml={2}>
-            <Typography variant='body1' sx={{ cursor: 'pointer' }}>
-              Go to home page <ArrowForwardIosIcon />{' '}
-            </Typography>
+            <Link to={'/'}>
+              <Typography variant='body1' sx={{ cursor: 'pointer' }}>
+                Go to home page <ArrowForwardIosIcon />{' '}
+              </Typography>
+            </Link>
           </Box>
         </Toolbar>
       </AppBar>
@@ -364,7 +431,9 @@ const VendorLayout = () => {
         >
           {currentRoute}
         </Typography>
-        <Outlet />
+        <Suspense fallback={<LoadingFallback />}>
+          <Outlet />
+        </Suspense>
       </Box>
     </Box>
   )

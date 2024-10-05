@@ -125,30 +125,40 @@ const SingleProduct = () => {
   return (
     <Box sx={{ maxWidth: 1200, margin: 'auto', padding: 2 }}>
       <Grid container spacing={4}>
-        <Grid item xs={12} md={6}>
-          <img
-            src={productImages[selectedImage]}
-            alt='Product'
-            style={{ width: '100%', height: 'auto' }}
-          />
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            {productImages.map((img, index) => (
-              <img
-                key={index}
-                src={img}
-                alt={`Thumbnail ${index + 1}`}
-                style={{
-                  width: 50,
-                  height: 50,
-                  margin: '0 5px',
-                  cursor: 'pointer',
-                  border: index === selectedImage ? '2px solid green' : 'none'
-                }}
-                onClick={() => setSelectedImage(index)}
-              />
-            ))}
-          </Box>
-        </Grid>
+      <Grid item xs={12} md={6}>
+  <img
+    src={productImages[selectedImage]}
+    alt='Product'
+    style={{
+      width: '100%', // Responsive width
+      height: '400px', // Fixed height for the main image
+      objectFit: 'cover', // Cover the area without stretching
+      border: '1px solid #e0e0e0' // Optional: Add a border to the main image
+    }}
+  />
+  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+    {productImages.map((img, index) => (
+      <img
+        key={index}
+        src={img}
+        alt={`Thumbnail ${index + 1}`}
+        style={{
+          width: '70px', // Fixed width for thumbnails
+          height: '70px', // Fixed height for thumbnails
+          margin: '0 5px',
+          cursor: 'pointer',
+          border: index === selectedImage ? '2px solid green' : '1px solid #e0e0e0', // Add border to thumbnails
+          borderRadius: '4px', // Optional: Add border radius for thumbnails
+          objectFit: 'cover' // Cover the area without stretching
+        }}
+        onClick={() => setSelectedImage(index)}
+      />
+    ))}
+  </Box>
+</Grid>
+
+      
+
         <Grid item xs={12} md={6}>
           <Typography variant='h4' gutterBottom>
             {product.name}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -13,56 +13,146 @@ import {
   Typography,
   IconButton,
   RadioGroup,
-  Radio
-} from '@mui/material'
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
-import { LocalizationProvider } from '@mui/x-date-pickers'
-import dayjs from 'dayjs'
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+  Radio,
+  Snackbar,
+  Alert,
+} from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import dayjs from 'dayjs';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import api from '../API/api'; // Adjust the path as necessary
 
 const DiscountPage = () => {
-  const [couponCode, setCouponCode] = useState('')
-  const [couponDescription, setCouponDescription] = useState('')
-  const [neverExpired, setNeverExpired] = useState(false)
-  const [startDate, setStartDate] = useState(dayjs())
-  const [endDate, setEndDate] = useState(dayjs().add(1, 'month'))
-  const [discountPercentage, setDiscountPercentage] = useState(10)
-  const [maxDiscountAmount, setMaxDiscountAmount] = useState(100)
-  const [minPurchaseAmount, setMinPurchaseAmount] = useState(200)
-  const [usageLimit, setUsageLimit] = useState(100)
-  const [applyCategory, setApplyCategory] = useState('')
-  const [applySubCategory, setApplySubCategory] = useState('')
-  const [applyProduct, setApplyProduct] = useState('')
-  const [couponType, setCouponType] = useState('allOrders')
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDescription, setCouponDescription] = useState('');
+  const [neverExpired, setNeverExpired] = useState(false);
+  const [startDate, setStartDate] = useState(dayjs());
+  const [endDate, setEndDate] = useState(dayjs().add(1, 'month'));
+  const [discountPercentage, setDiscountPercentage] = useState(10);
+  const [maxDiscountAmount, setMaxDiscountAmount] = useState(100);
+  const [minPurchaseAmount, setMinPurchaseAmount] = useState(200);
+  const [usageLimit, setUsageLimit] = useState(100);
+  const [applyCategory, setApplyCategory] = useState('');
+  const [applySubCategory, setApplySubCategory] = useState('');
+  const [applyProduct, setApplyProduct] = useState('');
+  const [couponType, setCouponType] = useState('allOrders');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  const categories = ['Electronics', 'Fashion', 'Groceries']
-  const subCategories = ['Smartphones', 'Laptops', 'Clothing']
-  const products = ['iPhone 14', 'MacBook Pro', 'Nike Shoes']
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [products, setProducts] = useState([]);
 
-  // Function to generate random coupon code
+  // Fetch all categories 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/category'); // Adjust API endpoint accordingly
+        setCategories(response.data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+   // Fetch subcategories based on selected category
+   const fetchSubCategories = async (categoryId) => {
+    try {
+      const response = await api.get(`/subcategory/${categoryId}`, 
+        {
+          withCredentials: true
+        }
+      ); 
+      setSubCategories(response.data);
+    } catch (error) {
+      setSnackbarMessage  (error.response?.data?.message || 'Unknown error');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  };
+
   const generateRandomCode = () => {
-    const randomCode = Math.random().toString(36).substring(2, 10).toUpperCase()
-    setCouponCode(randomCode)
-  }
+    const randomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+    setCouponCode(randomCode);
+  };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const discountData = {
       couponCode,
-      couponDescription,
-      startCouponDate: startDate.toISOString(),
-      endCouponDate: neverExpired ? null : endDate.toISOString(),
+      description: couponDescription,
+      startDate: startDate.toISOString(),
+      endDate: neverExpired ? null : endDate.toISOString(),
       discountPercentage,
       maxDiscountAmount,
-      minPurchaseAmount,
+      minPurchaseAmount: couponType === 'allOrders' ? null : minPurchaseAmount,
       usageLimit,
-      applyCategory: couponType === 'allOrders' ? 'All Orders' : applyCategory,
+      applyCategory: couponType === 'allOrders' ? null : applyCategory,
       applySubCategory: couponType === 'allOrders' ? null : applySubCategory,
-      applyProduct: couponType === 'allOrders' ? null : applyProduct
-    }
+      applyProduct: couponType === 'allOrders' ? null : applyProduct,
+    };
 
-    console.log(discountData)
-  }
+    try {
+      const response = await api.post('/coupon/discount', discountData, {
+        withCredentials: true,
+      });
+     
+      setSnackbarMessage(response?.data?.message);
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      resetForm();
+    } catch (error) {
+      console.log(error);
+      
+      setSnackbarMessage('Failed to create discount: ' + (error.response?.data?.error || 'Unknown error'));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  };
+
+  const resetForm = () => {
+    setCouponCode('');
+    setCouponDescription('');
+    setNeverExpired(false);
+    setStartDate(dayjs());
+    setEndDate(dayjs().add(1, 'month'));
+    setDiscountPercentage(10);
+    setMaxDiscountAmount(100);
+    setMinPurchaseAmount(200);
+    setUsageLimit(100);
+    setApplyCategory('');
+    setApplySubCategory('');
+    setApplyProduct('');
+    setCouponType('allOrders');
+    setProducts([]); // Reset products
+  };
+
+  // Fetch products based on selected category
+  const fetchProductsByCategory = async (categoryId) => {
+    try {
+      const response = await api.get(`/products/category/${categoryId}`, {
+        withCredentials: true,
+      });
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error fetching products by category:', error);
+    }
+  };
+
+  const handleCategoryChange = (event) => {
+    const selectedCategory = event.target.value;
+    setApplyCategory(selectedCategory);
+    fetchProductsByCategory(selectedCategory); // Fetch products for the selected category
+    fetchSubCategories(selectedCategory);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2 }, mt: 2, backgroundColor: '#fff' }}>
@@ -70,7 +160,6 @@ const DiscountPage = () => {
         <Grid item xs={12} md={8}>
           <Typography variant='h6'>Discount Configuration</Typography>
 
-          {/* Coupon Code Input */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TextField
               label='Create coupon code'
@@ -79,23 +168,21 @@ const DiscountPage = () => {
               fullWidth
               sx={{ mb: 2 }}
             />
-           <IconButton
-  onClick={generateRandomCode}
-  sx={{
-    mb: 2,
-    backgroundColor: "transparent", // Transparent button background
-    '&:hover': {
-      backgroundColor: "rgba(46, 204, 113, 0.1)", // Light green hover background
-    },
-    color: "#2ecc71" // Green color for the icon
-  }}
->
-  <AutoAwesomeIcon />
-</IconButton>
-
+            <IconButton
+              onClick={generateRandomCode}
+              sx={{
+                mb: 2,
+                backgroundColor: "transparent",
+                '&:hover': {
+                  backgroundColor: "rgba(46, 204, 113, 0.1)",
+                },
+                color: "#2ecc71",
+              }}
+            >
+              <AutoAwesomeIcon />
+            </IconButton>
           </Box>
 
-          {/* Coupon Description Input */}
           <TextField
             label='Coupon Description'
             value={couponDescription}
@@ -104,7 +191,6 @@ const DiscountPage = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* Discount Percentage */}
           <TextField
             label='Discount Percentage'
             type='number'
@@ -114,7 +200,6 @@ const DiscountPage = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* Max Discount Amount */}
           <TextField
             label='Max Discount Amount'
             type='number'
@@ -124,7 +209,6 @@ const DiscountPage = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* Min Purchase Amount */}
           <TextField
             label='Min Purchase Amount'
             type='number'
@@ -134,7 +218,6 @@ const DiscountPage = () => {
             sx={{ mb: 2 }}
           />
 
-          {/* Usage Limit */}
           <TextField
             label='Usage Limit'
             type='number'
@@ -145,7 +228,6 @@ const DiscountPage = () => {
           />
         </Grid>
 
-        {/* Date Pickers */}
         <Grid container spacing={3} item xs={12} md={8}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Grid container item spacing={2}>
@@ -169,7 +251,6 @@ const DiscountPage = () => {
             </Grid>
           </LocalizationProvider>
 
-          {/* Never Expired Checkbox */}
           <Grid item xs={12}>
             <FormControlLabel
               control={
@@ -183,7 +264,6 @@ const DiscountPage = () => {
           </Grid>
         </Grid>
 
-        {/* Coupon Type Radio Buttons */}
         <Grid item xs={12} md={8}>
           <Typography variant='h6'>Coupon Type</Typography>
           <RadioGroup
@@ -205,72 +285,79 @@ const DiscountPage = () => {
           </RadioGroup>
         </Grid>
 
-        {/* Apply For (Category, Subcategory, Product) */}
         {couponType === 'specific' && (
           <Grid container item xs={12} md={8} spacing={2}>
-            <Grid item xs={12}>
-              <Typography variant='h6'>Apply Discount To</Typography>
-            </Grid>
-
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Category</InputLabel>
+              <FormControl fullWidth>
+                <InputLabel id='category-label'>Select Category</InputLabel>
                 <Select
+                  labelId='category-label'
                   value={applyCategory}
-                  onChange={e => setApplyCategory(e.target.value)}
+                  onChange={handleCategoryChange}
                 >
                   {categories.map(category => (
-                    <MenuItem key={category} value={category}>
-                      {category}
+                    <MenuItem key={category._id} value={category._id}>
+                      {category.name}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Subcategory</InputLabel>
-                <Select
-                  value={applySubCategory}
-                  onChange={e => setApplySubCategory(e.target.value)}
-                >
-                  {subCategories.map(subCategory => (
-                    <MenuItem key={subCategory} value={subCategory}>
-                      {subCategory}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+            {applyCategory && (
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel id='sub-category-label'>Select Subcategory</InputLabel>
+                  <Select
+                    labelId='sub-category-label'
+                    value={applySubCategory}
+                    onChange={e => setApplySubCategory(e.target.value)}
+                  >
+                    {subCategories.map(sub => (
+                      <MenuItem key={sub._id} value={sub._id}>
+                        {sub.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Product</InputLabel>
-                <Select
-                  value={applyProduct}
-                  onChange={e => setApplyProduct(e.target.value)}
-                >
-                  {products.map(product => (
-                    <MenuItem key={product} value={product}>
-                      {product}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+            {applyCategory && (
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel id='product-label'>Select Product</InputLabel>
+                  <Select
+                    labelId='product-label'
+                    value={applyProduct}
+                    onChange={e => setApplyProduct(e.target.value)}
+                  >
+                    {products.map(product => (
+                      <MenuItem key={product._id} value={product._id}>
+                        {product.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
           </Grid>
         )}
+
+        <Grid item xs={12} md={8}>
+          <Button variant='contained' onClick={handleSave}>
+            Save Discount
+          </Button>
+        </Grid>
       </Grid>
 
-      {/* Save Button */}
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Button variant='contained' color='primary' onClick={handleSave}>
-          Save
-        </Button>
-      </Box>
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
-  )
-}
+  );
+};
 
-export default DiscountPage
+export default DiscountPage;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Box,
   TextField,
@@ -7,272 +7,432 @@ import {
   Grid,
   Paper,
   Autocomplete,
-  Chip,
-  FormControlLabel,
-  Switch,
-  InputAdornment,
-  Checkbox,
-  Divider
+  Snackbar,
+  CircularProgress
 } from '@mui/material'
-import { CloudUpload, Save, ExitToApp } from '@mui/icons-material'
+import {
+  CloudUpload,
+  Save,
+  ExitToApp,
+  Cancel,
+  ExitToAppSharp
+} from '@mui/icons-material'
+import { useNavigate, useParams } from 'react-router-dom'
+import api from '../API/api'
+import uploadImageToCloudinary from '../cloudinary/cloudinary'
 
-const  VendorProductInfo = () => {
-  const [images, setImages] = useState([])
+const VendorProductInfo = () => {
+  const { productId } = useParams()
+  const navigate = useNavigate()
+
+  // State management for product fields
+  const [product, setProduct] = useState(null)
+  const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [price, setPrice] = useState('')
+  const [discountedPrice, setDiscountedPrice] = useState('')
+  const [stock, setStock] = useState(0)
+  const [rating, setRating] = useState(0)
+  const [numReviews, setNumReviews] = useState(0)
+  const [vendorShop, setVendorShop] = useState('')
   const [selectedCategories, setSelectedCategories] = useState([])
   const [selectedSubcategories, setSelectedSubcategories] = useState([])
+  const [selectedBrand, setSelectedBrand] = useState([])
+  const [loading, setLoading] = useState(false)
 
-  const handleImageUpload = event => {
-    const newImages = Array.from(event.target.files)
-    setImages([...images, ...newImages])
+
+  const [existingImages, setExistingImages] = useState([])
+  const [selectedFiles, setSelectedFiles] = useState([])
+
+  // State for category, subcategory, and brand options (dropdowns)
+  const [allCategories, setAllCategories] = useState([])
+  const [allSubcategories, setAllSubcategories] = useState([])
+  const [allBrands, setAllBrands] = useState([])
+
+  // Snackbar state for success/error messages
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState('')
+
+  const getProduct = async () => {
+    try {
+      const response = await api.get(`/products/${productId}`)
+      const productData = response.data
+
+      console.log(response.data)
+
+      // Set product fields
+      setProduct(productData)
+      setName(productData.name)
+      setDescription(productData.description)
+      setPrice(productData.price)
+      setDiscountedPrice(productData.discountedPrice || '')
+      setStock(productData.stock)
+      setRating(productData.rating)
+      setNumReviews(productData.numReviews)
+      setVendorShop(productData.vendorShop)
+      setSelectedCategories([productData.category])
+      setSelectedSubcategories([productData.subcategory])
+      setSelectedBrand(productData.brand)
+      setExistingImages(productData?.image)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
-  const handleSubmit = event => {
-    event.preventDefault()
-    // Handle form submission
+  const getAllData = async () => {
+    try {
+      const [categoriesRes, subcategoriesRes, brandsRes] = await Promise.all([
+        api.get('/category'),
+        api.get('/subcategory'),
+        api.get('/brands')
+      ])
+      setAllCategories(categoriesRes?.data)
+      setAllSubcategories(subcategoriesRes?.data)
+      setAllBrands(brandsRes?.data)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
-  const categories = ['Category 1', 'Category 2', 'Category 3']
-  const subcategories = ['Subcategory 1', 'Subcategory 2', 'Subcategory 3']
+  // Handle image upload
+  const handleImageSelect = e => {
+    const files = Array.from(e.target.files)
+
+    // Limit total images (existing + new) to 4
+    if (existingImages?.length + selectedFiles?.length + files?.length > 4) {
+      alert('You can only upload a total of 4 images.')
+      return
+    }
+
+    setSelectedFiles(prevFiles => [...prevFiles, ...files])
+  }
+
+  const removeImage = (index, isExisting = false) => {
+    if (isExisting) {
+      setExistingImages(prevImages => prevImages.filter((_, i) => i !== index))
+    } else {
+      setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index))
+    }
+  }
+
+  const handleSubmit = async e => {
+    e.preventDefault()
+    setLoading(true) // Start loader
+
+    try {
+      // Upload only if new files are selected
+      let uploadImages = []
+      if (selectedFiles.length > 0) {
+        uploadImages = await Promise.all(
+          selectedFiles.map(file => uploadImageToCloudinary(file))
+        )
+      }
+
+      const updatedProductData = {
+        name,
+        description,
+        price,
+        discountedPrice,
+        stock,
+        rating,
+        numReviews,
+        vendorShop,
+        category: selectedCategories[0]?._id,
+        subcategory: selectedSubcategories[0]?._id,
+        brand: selectedBrand?._id,
+        image: [...existingImages, ...uploadImages] // Assuming images are URLs or uploaded to Cloudinary
+      }
+
+      
+
+      // Determine whether to create or update the product
+      let response
+      if (productId) {
+        response = await api.put(`/products/${productId}`, updatedProductData, {
+          withCredentials: true
+        })
+        setSnackbarMessage(
+          response.data.message || 'Product updated successfully!'
+        )
+      } else {
+        response = await api.post(
+          `/products/addProduct`,
+          {
+            name,
+            description,
+            price,
+            discountedPrice,
+            stock,
+            rating,
+            numReviews,
+            vendorShop,
+            categoryName: selectedCategories[0]?._id,
+            subcategoryName: selectedSubcategories[0]?._id,
+            brand: selectedBrand?._id,
+            image: [ ...uploadImages]
+          },
+
+          { withCredentials: true }
+        )
+        setSnackbarMessage(
+          response.data.message || 'Product created successfully!'
+        )
+      }
+      
+
+      setSnackbarOpen(true)
+
+      // Introduce a delay of 2 seconds before navigating
+      setTimeout(() => {
+        navigate('/vendor/products')
+      }, 2000) // Delay of 2000 milliseconds (2 seconds)
+    } catch (error) {
+      console.log('new error ', error)
+      setSnackbarMessage(
+        error.response?.data?.message || 'Failed to update product.'
+      )
+      setSnackbarOpen(true)
+    } finally {
+      setLoading(false) // Stop loader
+    }
+  }
+
+  useEffect(() => {
+    getProduct()
+    getAllData()
+  }, [productId])
 
   return (
     <>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', lg: 'row' },
-          gap:3,
-          maxWidth: '100%',
-          margin: 'auto',
-          py: { xs: 1, sm: 2 },
-          mt: 2
-        }}
-      >
-        {/* Left Box (Form for Add/Edit Product) */}
-        <Box component='form' onSubmit={handleSubmit} sx={{ flex: 1 }}>
-          <Paper elevation={3} sx={{ padding: 3, marginBottom: 3 }}>
-            <Typography variant='h4' gutterBottom>
-              Add/Edit Product
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label='Product Name'
-                  variant='outlined'
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label='Permalink' variant='outlined' />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Autocomplete
-                  options={['Store 1', 'Store 2', 'Store 3']}
-                  renderInput={params => (
-                    <TextField {...params} label='Store' variant='outlined' />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Autocomplete
-                  options={['Brand 1', 'Brand 2', 'Brand 3']}
-                  renderInput={params => (
-                    <TextField {...params} label='Brand' variant='outlined' />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label='Vendor Name' variant='outlined' />
-              </Grid>
-              <Grid item xs={12}>
-                <Button
-                  variant='contained'
-                  component='label'
-                  startIcon={<CloudUpload />}
-                >
-                  Upload Images
-                  <input
-                    type='file'
-                    hidden
-                    multiple
-                    onChange={handleImageUpload}
-                    accept='image/*'
+      <Box component='form' onSubmit={handleSubmit} sx={{ flex: 1 }}>
+        <Paper elevation={3} sx={{ padding: 3, marginBottom: 3 }}>
+          <Typography variant='h4' gutterBottom>
+            {productId ? 'Update Product' : 'Create New Product'}
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                label='Product Name'
+                variant='outlined'
+                value={name}
+                onChange={e => setName(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                label='Price'
+                variant='outlined'
+                type='number'
+                value={price}
+                onChange={e => setPrice(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label='Discounted Price'
+                variant='outlined'
+                type='number'
+                value={discountedPrice}
+                onChange={e => setDiscountedPrice(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                label='Stock'
+                variant='outlined'
+                type='number'
+                value={stock}
+                onChange={e => setStock(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                label='Rating'
+                variant='outlined'
+                type='number'
+                value={rating}
+                onChange={e => setRating(e.target.value)}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                label='Vendor Shop'
+                variant='outlined'
+                value={vendorShop}
+                onChange={e => setVendorShop(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Autocomplete
+                options={allCategories}
+                getOptionLabel={option => option?.name || 'Unnamed Category'}
+                value={selectedCategories[0] || null}
+                onChange={(e, newValue) => setSelectedCategories([newValue])}
+                renderInput={params => (
+                  <TextField {...params} label='Category' variant='outlined' />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Autocomplete
+                options={allSubcategories}
+                getOptionLabel={option => option?.name || 'Unnamed Subcategory'}
+                value={selectedSubcategories[0] || null}
+                onChange={(e, newValue) => setSelectedSubcategories([newValue])}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label='Subcategory'
+                    variant='outlined'
                   />
-                </Button>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 1,
-                    marginTop: 2
-                  }}
-                >
-                  {images.map((image, index) => (
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Autocomplete
+                options={allBrands}
+                getOptionLabel={option => option?.name || 'Unnamed Brand'}
+                value={selectedBrand || null}
+                onChange={(e, newValue) => setSelectedBrand(newValue)}
+                renderInput={params => (
+                  <TextField {...params} label='Brand' variant='outlined' />
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Button
+                variant='contained'
+                component='label'
+                startIcon={<CloudUpload />}
+                disabled={existingImages?.length + selectedFiles?.length >= 4} // Disable if 4 images
+              >
+                Upload Images
+                <input
+                  type='file'
+                  hidden
+                  multiple
+                  onChange={handleImageSelect}
+                  accept='image/*'
+                  disabled={existingImages?.length + selectedFiles?.length >= 4} // Prevent selection if 4 images
+                />
+              </Button>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  marginTop: 2
+                }}
+              >
+                {/* Display existing images */}
+                {existingImages?.map((image, index) => (
+                  <Box key={index} sx={{ position: 'relative' }}>
                     <img
-                      key={index}
-                      src={URL.createObjectURL(image)}
-                      alt={`Product ${index + 1}`}
+                      src={image}
+                      alt={`Existing Product ${index + 1}`}
                       style={{ width: 100, height: 100, objectFit: 'cover' }}
                     />
-                  ))}
-                </Box>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label='Description'
-                  multiline
-                  rows={4}
-                  variant='outlined'
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label='Price'
-                  variant='outlined'
-                  type='number'
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position='start'>$</InputAdornment>
-                    )
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label='Discount'
-                  variant='outlined'
-                  type='number'
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position='end'>%</InputAdornment>
-                    )
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label='SKU' variant='outlined' />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label='Barcode' variant='outlined' />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={<Switch color='primary' />}
-                  label='Is Popular?'
-                />
-              </Grid>
+                    <Button
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        minWidth: 'unset',
+                        padding: 0
+                      }}
+                      onClick={() => removeImage(index, true)} // Remove existing image
+                    >
+                      <Cancel color='error' />
+                    </Button>
+                  </Box>
+                ))}
+
+                {/* Display newly selected images */}
+                {selectedFiles.map((file, index) => (
+                  <Box
+                    key={index + existingImages?.length}
+                    sx={{ position: 'relative' }}
+                  >
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`Selected Product ${index + 1}`}
+                      style={{ width: 100, height: 100, objectFit: 'cover' }}
+                    />
+                    <Button
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        minWidth: 'unset',
+                        padding: 0
+                      }}
+                      onClick={() => removeImage(index)} // Remove newly selected image
+                    >
+                      <Cancel color='error' />
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
             </Grid>
-          </Paper>
-        </Box>
 
-        {/* Right Box (Categories and Subcategories) */}
-        <Box sx={{ flex: 1 }}>
-          <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-            {/* Categories Section */}
-            <Box
-              sx={{
-                flexGrow: 1,
-                minWidth: 200,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 0
-              }}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label='Description'
+                multiline
+                rows={4}
+                variant='outlined'
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+        <Grid item xs={12} sx={{ padding: { xs: 1, sm: 2 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+            <Button
+              type='submit'
+              variant='contained'
+              color='primary'
+              startIcon={loading ? <CircularProgress size={20} /> : <Save />}
+              disabled={loading}
             >
-              <Typography variant='subtitle1'>Categories</Typography>
-              <Divider />
-              {categories.map(category => (
-                <FormControlLabel
-                  key={category}
-                  control={
-                    <Checkbox
-                      checked={selectedCategories.includes(category)}
-                      onChange={e => {
-                        if (e.target.checked) {
-                          setSelectedCategories([
-                            ...selectedCategories,
-                            category
-                          ])
-                        } else {
-                          setSelectedCategories(
-                            selectedCategories.filter(c => c !== category)
-                          )
-                        }
-                      }}
-                    />
-                  }
-                  label={category}
-                />
-              ))}
-            </Box>
-
-            {/* Subcategories Section */}
-          </Paper>
-          <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-            <Box
-              sx={{
-                flexGrow: 1,
-                minWidth: 200,
-                mt: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 0
-              }}
+              {loading
+                ? 'Saving...'
+                : productId
+                ? 'Update Product'
+                : 'Create Product'}
+            </Button>
+            <Button
+              variant='outlined'
+              color='secondary'
+              startIcon={<ExitToApp />}
             >
-              <Typography variant='subtitle1'>Subcategories</Typography>
-              <Divider />
-              {subcategories.map(subcategory => (
-                <FormControlLabel
-                  key={subcategory}
-                  control={
-                    <Checkbox
-                      checked={selectedSubcategories.includes(subcategory)}
-                      onChange={e => {
-                        if (e.target.checked) {
-                          setSelectedSubcategories([
-                            ...selectedSubcategories,
-                            subcategory
-                          ])
-                        } else {
-                          setSelectedSubcategories(
-                            selectedSubcategories.filter(s => s !== subcategory)
-                          )
-                        }
-                      }}
-                    />
-                  }
-                  label={subcategory}
-                />
-              ))}
-            </Box>
-          </Paper>
-        </Box>
+              Cancel
+            </Button>
+          </Box>
+        </Grid>
       </Box>
 
-      <Grid item xs={12} sx={{ padding: { xs: 1, sm: 2 },}} >
-        <Box sx={{ display: 'flex', justifyContent: 'flex-center', gap: 2 }}>
-          <Button
-            variant='contained'
-            color='primary'
-            startIcon={<Save />}
-            type='submit'
-          >
-            Save
-          </Button>
-          <Button
-            variant='outlined'
-            color='secondary'
-            startIcon={<ExitToApp />}
-          >
-            Cancel
-          </Button>
-        </Box>
-      </Grid>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+      />
     </>
   )
 }

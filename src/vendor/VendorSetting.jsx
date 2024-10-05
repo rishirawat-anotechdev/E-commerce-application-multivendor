@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Grid,
   TextField,
@@ -6,74 +6,126 @@ import {
   Box,
   InputAdornment,
   Button,
-  MenuItem
-} from '@mui/material'
-import InstagramIcon from '@mui/icons-material/Instagram'
-import YouTubeIcon from '@mui/icons-material/YouTube'
-import TwitterIcon from '@mui/icons-material/Twitter'
-import PinterestIcon from '@mui/icons-material/Pinterest'
+  MenuItem,
+  Snackbar,
+  Alert
+} from '@mui/material';
+import api from '../API/api';
+import { AuthContext } from '../auth/AuthContext';
+import uploadImageToCloudinary from '../cloudinary/cloudinary';
 
 const VendorSetting = () => {
+  const { user } = useContext(AuthContext);
+  const [userDetails, setUserDetails] = useState({
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    shopName: '',
+    shopLogo: '',
+    city: '',
+    state: '',
+    homeNumber: '',
+    pinCode: '',
+    landmark: ''
+  });
+  const [shopImage, setShopImage] = useState(null);
+  const [message, setMessage] = useState({ open: false, text: '', severity: 'success' });
+
+  const getUserDetails = async () => {
+    try {
+      const response = await api.get(`users/profile/${user.id}`, {
+        withCredentials: true
+      });
+      setUserDetails(response.data.user);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setUserDetails({ ...userDetails, [e.target.name]: e.target.value });
+  };
+
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setShopImage(e.target.files[0]);
+    }
+  };
+
+  const updateUser = async () => {
+    try {
+      let shopLogoUrl = userDetails.shopLogo;
+
+      // If a new shop image is selected, upload to Cloudinary
+      if (shopImage) {
+        shopLogoUrl = await uploadImageToCloudinary(shopImage);
+      }
+
+      const updatedData = {
+        ...userDetails,
+        shopLogo: shopLogoUrl,
+      };
+
+      const response = await api.put(`/users/${user.id}/profile`, updatedData, {
+        withCredentials: true
+      });
+
+      setMessage({ open: true, text: response.data.message, severity: 'success' });
+      setUserDetails(response.data.user);
+    } catch (error) {
+      setMessage({ open: true, text: 'Failed to update profile.', severity: 'error' });
+    }
+  };
+
+  useEffect(() => {
+    getUserDetails();
+  }, []);
+
   return (
-    <Box sx={{ px: { xs: 1, sm: 2 }, mt: 2, backgroundColor:"#fff" }}>
-            {/* Logo Section */}
-       <Typography variant='h6' gutterBottom sx={{mt:4}}>
-            Store logo
-          </Typography>
-          <Grid
-            item
-            xs={12}
-            sm={4}
-            display='flex'
-            flexDirection='column'
-            alignItems='center'
-            sx={{ mt: 4 }}
-          >
-            <img
-              src='/path/to/logo.png'
-              alt='Logo'
-              style={{ width: 100, height: 100 }}
-            />
-            <Button variant='contained' component='label'>
-              Choose Image
-              <input type='file' hidden />
-            </Button>
-            <Typography variant='body2' align='center'>
-              This logo will be used in Store logo
-            </Typography>
-          </Grid>
+    <Box sx={{ px: { xs: 1, sm: 2 }, mt: 2, backgroundColor: '#fff' }}>
+     
+      <Grid item xs={12} sm={4} display='flex' flexDirection='column' alignItems='center' sx={{ mt: 4 }}>
+        <img src={userDetails.shopLogo || '/path/to/logo.png'} alt='Logo' style={{ width: 100, height: 100, borderRadius: '50%', marginTop:2  }}  />
+        <Button variant='contained' component='label' sx={{mt:1 }}>
+          Choose Image
+          <input type='file' hidden onChange={handleImageChange} />
+        </Button>
+        <Typography variant='body2' align='center'>
+          This logo will be used in Store logo
+        </Typography>
+      </Grid>
+
       <Typography variant='h6' gutterBottom>
         Store Information
       </Typography>
 
       <Grid container spacing={3}>
-        {/* Name */}
         <Grid item xs={12} sm={6}>
           <TextField
             required
-            id='name'
-            name='name'
-            label='Name'
+            id='fullName'
+            name='fullName'
+            label='Full Name'
             fullWidth
             variant='outlined'
-            defaultValue='GoPro'
+            value={userDetails.fullName}
+            onChange={handleInputChange}
           />
         </Grid>
 
-        {/* Shop URL */}
         <Grid item xs={12} sm={6}>
           <TextField
             required
-            id='shopUrl'
-            name='shopUrl'
-            label='Shop URL'
+            id='shopName'
+            name='shopName'
+            label='Shop Name'
             fullWidth
             variant='outlined'
-            defaultValue='gopro'
+            value={userDetails.shopName}
+            onChange={handleInputChange}
           />
         </Grid>
 
-        {/* Email */}
         <Grid item xs={12} sm={6}>
           <TextField
             required
@@ -82,23 +134,23 @@ const VendorSetting = () => {
             label='Email'
             fullWidth
             variant='outlined'
-            defaultValue='dixie67@example.net'
+            value={userDetails.email}
+            onChange={handleInputChange}
           />
         </Grid>
 
-        {/* Phone */}
         <Grid item xs={12} sm={6}>
           <TextField
-            id='phone'
-            name='phone'
-            label='Phone'
+            id='phoneNumber'
+            name='phoneNumber'
+            label='Phone Number'
             fullWidth
             variant='outlined'
-            defaultValue='+17749778923'
+            value={userDetails.phoneNumber}
+            onChange={handleInputChange}
           />
         </Grid>
 
-        {/* Description */}
         <Grid item xs={12}>
           <TextField
             id='description'
@@ -108,167 +160,91 @@ const VendorSetting = () => {
             multiline
             rows={3}
             variant='outlined'
-            defaultValue='Qui tenetur nihil voluptas ipsam ipsa nulla id.'
+            defaultValue='Store description goes here.'
           />
         </Grid>
       </Grid>
-      <Box sx={{ mt: 4 }}>
-        <Typography variant='h6' gutterBottom>
-          Social Media Links
-        </Typography>
-
-        <Grid container spacing={3}>
-          {/* Instagram */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              id='instagram'
-              label='Instagram'
-              fullWidth
-              variant='outlined'
-              defaultValue='https://instagram.com/'
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <InstagramIcon />
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Grid>
-
-          {/* YouTube */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              id='youtube'
-              label='YouTube'
-              fullWidth
-              variant='outlined'
-              defaultValue='https://youtube.com/'
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <YouTubeIcon />
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Grid>
-
-          {/* X (Twitter) */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              id='twitter'
-              label='X (Twitter)'
-              fullWidth
-              variant='outlined'
-              defaultValue='https://x.com/'
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <TwitterIcon />
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Grid>
-
-          {/* Pinterest */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              id='pinterest'
-              label='Pinterest'
-              fullWidth
-              variant='outlined'
-              defaultValue='https://pinterest.com/'
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <PinterestIcon />
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Grid>
-        </Grid>
-      </Box>
 
       <Box sx={{ mt: 4 }}>
         <Typography variant='h6' gutterBottom>
           Country Information
         </Typography>
         <Grid container spacing={2}>
-          {/* Country */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              select
-              label='Country'
-              defaultValue=''
-              variant='outlined'
-            >
-              <MenuItem value='Italy'>Italy</MenuItem>
-              <MenuItem value='Other'>Other</MenuItem>
-            </TextField>
-          </Grid>
-
-          {/* State */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label='State'
-              defaultValue='Michigan'
-              variant='outlined'
-            />
-          </Grid>
-
-          {/* City */}
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label='City'
-              defaultValue='Damonhaven'
+              name='city'
+              value={userDetails.city}
+              onChange={handleInputChange}
               variant='outlined'
             />
           </Grid>
-
-          {/* Address */}
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label='Address'
-              defaultValue='521 Fat Crest'
+              label='State'
+              name='state'
+              value={userDetails.state}
+              onChange={handleInputChange}
               variant='outlined'
             />
           </Grid>
-
-          {/* Company */}
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label='Company' variant='outlined' />
+            <TextField
+              fullWidth
+              label='Home Number'
+              name='homeNumber'
+              value={userDetails.homeNumber}
+              onChange={handleInputChange}
+              variant='outlined'
+            />
           </Grid>
-
-          {/* Tax ID */}
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label='Tax ID' variant='outlined' />
+            <TextField
+              fullWidth
+              label='Pin Code'
+              name='pinCode'
+              value={userDetails.pinCode}
+              onChange={handleInputChange}
+              variant='outlined'
+            />
           </Grid>
-
-         
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label='Landmark'
+              name='landmark'
+              value={userDetails.landmark}
+              onChange={handleInputChange}
+              variant='outlined'
+            />
+          </Grid>
         </Grid>
       </Box>
-   
-          <Box sx={{ display: 'flex', gap: 2, marginTop: 4 }}>
-      {/* Save Button with Green Theme */}
-      <Button
-        variant="contained"
-        sx={{ backgroundColor: 'green', '&:hover': { backgroundColor: 'darkgreen' } }}
-        startIcon={<i className="fas fa-save"></i>} // You can replace this with an appropriate icon
+
+      <Box sx={{ display: 'flex', gap: 2, marginTop: 4 }}>
+        <Button
+          variant='contained'
+          sx={{ backgroundColor: 'green', '&:hover': { backgroundColor: 'darkgreen' } }}
+          onClick={updateUser}
+        >
+          Save
+        </Button>
+      </Box>
+
+      {/* Snackbar for success/error messages */}
+      <Snackbar
+        open={message.open}
+        autoHideDuration={6000}
+        onClose={() => setMessage({ ...message, open: false })}
       >
-        Save
-      </Button>
-
-    
+        <Alert onClose={() => setMessage({ ...message, open: false })} severity={message.severity} sx={{ width: '100%' }}>
+          {message.text}
+        </Alert>
+      </Snackbar>
     </Box>
-    </Box>
-  )
-}
+  );
+};
 
-export default VendorSetting
+export default VendorSetting;
