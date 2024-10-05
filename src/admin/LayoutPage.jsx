@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { Suspense, useContext, useEffect, useState } from 'react'
 import {
   AppBar,
   Toolbar,
@@ -14,7 +14,8 @@ import {
   InputBase,
   Avatar,
   Divider,
-  Badge
+  Badge,
+  CircularProgress
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import SearchIcon from '@mui/icons-material/Search'
@@ -132,6 +133,14 @@ const navLinks = [
     iconColor: '#2ecc71'
   } // Green
 ]
+
+
+// Loading fallback for lazy loading
+export const LoadingFallback = () => (
+  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <CircularProgress />
+  </Box>
+);
 
 const Layout = () => {
   const {user, logout } = useContext(AuthContext)
@@ -477,7 +486,9 @@ useEffect(() => {
         >
           {currentRoute}
         </Typography>
+        <Suspense fallback={<LoadingFallback />}>
         <Outlet />
+      </Suspense>
       </Box>
     </Box>
   )

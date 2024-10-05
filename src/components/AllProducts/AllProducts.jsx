@@ -2,11 +2,26 @@ import React, { useState, useEffect } from 'react';
  // Make sure the import path is correct
 import api from '../../API/api';
 import ProductCard from './ProuductCard';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'; 
 
 const AllProducts = () => {
+  const scrollRef = React.useRef(null);
   const [categories, setCategories] = useState([]);
   const [categoryId, setCategoryId] = useState(null);
   const [products, setProducts] = useState([]);
+
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -100, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 100, behavior: 'smooth' });
+    }
+  };
 
   // Fetch categories from API
   useEffect(() => {
@@ -54,17 +69,29 @@ const AllProducts = () => {
   return (
     <div className="container mx-auto p-4 px-2">
       <h1 className="text-black font-bold text-[40px]">Organic & Fresh Products</h1>
-      <div className="flex space-x-4 my-4">
+      <div className="flex items-center justify-between   my-4">
+      <button onClick={scrollLeft} className="p-2 rounded bg-gray-300 hover:bg-gray-400">
+        <FaChevronLeft />
+      </button>
+      <div
+        ref={scrollRef}
+        className="flex space-x-4 overflow-x-auto scrollbar-hide"
+       // Adjust width as needed
+      >
         {categories.map((cat) => (
           <button
             key={cat._id}
             onClick={() => setCategoryId(cat._id)}
-            className={`px-2 py-1 rounded ${categoryId === cat._id ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+            className={`px-2 py-1 rounded whitespace-nowrap ${categoryId === cat._id ? 'bg-green-500 text-white' : 'bg-gray-200' }`}
           >
             {cat.name}
           </button>
         ))}
       </div>
+      <button onClick={scrollRight} className="p-2 rounded bg-gray-300 hover:bg-gray-400">
+        <FaChevronRight />
+      </button>
+    </div>
       <div className="grid mt-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {products.length > 0 ? (
           products.map((product, index) => (

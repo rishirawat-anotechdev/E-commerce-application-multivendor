@@ -1,125 +1,181 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Avatar, IconButton, TextField, Select, MenuItem, Paper, Box, Chip, TablePagination
-} from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
+  Box,
+  IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  TablePagination,
+  Typography,
+  Button,
+  Avatar
+} from '@mui/material'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
+import { Link } from 'react-router-dom'
+import api from '../API/api'
 
-const usersData = [
-  { id: 10, avatar: 'user1.jpg', name: 'Kaleigh Sporer', email: 'ursula.moore@example.org', createdAt: '2024-07-22', status: 'Activated', isVendor: 'No' },
-  { id: 9, avatar: 'user2.jpg', name: 'Amie Wiza PhD', email: 'delia27@example.com', createdAt: '2024-07-22', status: 'Activated', isVendor: 'Yes' },
-  { id: 8, avatar: 'user3.jpg', name: 'Adela Rowe PhD', email: 'kendra70@example.org', createdAt: '2024-07-22', status: 'Activated', isVendor: 'No' },
-  { id: 7, avatar: 'user4.jpg', name: 'Vicky Bednar', email: 'merl.schultz@example.org', createdAt: '2024-07-22', status: 'Activated', isVendor: 'No' },
-  { id: 6, avatar: 'user5.jpg', name: 'Miss Magdalena Hoeger Jr.', email: 'electa73@example.net', createdAt: '2024-07-22', status: 'Activated', isVendor: 'Yes' },
-  { id: 5, avatar: 'user6.jpg', name: 'Josie Hilpert', email: 'dgoyette@example.net', createdAt: '2024-07-22', status: 'Activated', isVendor: 'No' },
-  // Add more users as needed
-];
+
 
 const CustomerPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [page, setPage] = useState(0);
+  const [Users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
 
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+
+  // get vendors 
+  const getVendorData = async () => {
+    try {
+      const response = await api.get('admin/users?role=User', {
+        withCredentials: true,
+      });
+      console.log("data",response.data);
+      
+      setUsers(response.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Reset to first page when changing rows per page
-  };
+  useEffect(() => {
+    getVendorData();
+  }, []);
+
+   // Filter vendors based on search query
+   const FilteredUsers = Users.filter((users) =>
+    users.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
-  const filteredUsers = usersData.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
-  const displayedUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
-      <Box sx={{ p: 4, backgroundColor: 'white' }}>
+    <>
+      {/* Search Bar */}
+      <Box
+        sx={{
+          py: { xs: 1, sm: 2 },
+          mt: 2,
+          backgroundColor: '#fff',
+          display: 'flex',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          px: 2
+        }}
+      >
         <TextField
-          label="Search by Username"
-          variant="outlined"
-          fullWidth
-          value={searchTerm}
-          onChange={handleSearch}
-          margin="normal"
+          placeholder='Search by name'
+          variant='outlined'
+          size='small'
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ width: 400 }}
         />
       </Box>
 
-      <TableContainer component={Paper} sx={{ mt: 4 }}>
+      {/* Table */}
+      <TableContainer component={Paper} sx={{ mt: 2 }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Avatar</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Created At</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Is Vendor?</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Operations</TableCell>
+              <TableCell>Sr No.</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Avatar</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Created At</TableCell>
+              <TableCell>Status</TableCell>
+             
+              <TableCell>Operations</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {displayedUsers.map((user, index) => (
-              <TableRow key={user.id} style={{ backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white' }}>
-                <TableCell>{user.id}</TableCell>
-                <TableCell><Avatar src={user.avatar} alt={user.name} /></TableCell>
-                <TableCell><a href={`/admin/customer-profile/${user.id}`}>{user.name}</a></TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.createdAt}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={user.status}
-                    color={user.status === 'Activated' ? 'primary' : 'secondary'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={user.isVendor}
-                    color={user.isVendor === 'Yes' ? 'primary' : 'secondary'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                  <IconButton aria-label="edit" color="primary">
-                 <Link to={'/admin/customer-profile/:id'}>
-                 <Edit />
-                 </Link>
-                  </IconButton>
-                  <IconButton aria-label="delete" color="error">
-                    <Delete />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+            {FilteredUsers
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((users, index) => (
+                <TableRow
+                  key={users._id}
+                  style={{
+                    backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white',
+                  }}
+                >
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{users._id}</TableCell>
+                  <TableCell>
+                    {users.shopLogo ? (
+                      <img
+                        src={users.shopLogo}
+                        alt={users.fullName}
+                        width='40'
+                        height='40'
+                      />
+                    ) : (
+                      <Avatar>{users.fullName.charAt(0)}</Avatar>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Link to={`/admin/user-profile/${users._id}`}>
+                      <Typography
+                        variant='body2'
+                        sx={{
+                          fontWeight: 500,
+                  
+                          cursor: 'pointer',
+                      
+                        }}
+                      >
+                        {users.fullName}
+                      </Typography>
+                    </Link>
+                  </TableCell>
+                  <TableCell>{users.email}</TableCell>
+                  <TableCell>{new Date(users.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Button variant='contained' size='small' color='success'>
+                      {users.isActive ? 'Active' : 'Inactive'}
+                    </Button>
+                  </TableCell>
+                
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    <IconButton color='primary'>
+                      <Link to={`/admin/user-profile/${users._id}`}>
+                        <EditIcon />
+                      </Link>
+                    </IconButton>
+                    <IconButton color='error'>
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
-        </TableContainer>
-        <TablePagination
-          component="div"
-          count={filteredUsers.length}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
-          labelRowsPerPage="Records per page"
-          labelDisplayedRows={({ from, to, count }) =>
-            `Showing from ${from} to ${to} of ${count !== -1 ? count : `more than ${to}`}`
-          }
-        />
-    
-    </Box>
-  );
-};
+      </TableContainer>
 
-export default CustomerPage;
+      {/* Pagination */}
+      <TablePagination
+        component='div'
+        count={FilteredUsers.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+    </>
+  )
+}
+
+export default CustomerPage

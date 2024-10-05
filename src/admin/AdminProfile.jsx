@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -9,61 +9,126 @@ import {
   Grid,
   MenuItem,
   Select,
-  Divider
-} from '@mui/material'
+  Divider,
+  Snackbar,
+  Alert
+} from '@mui/material';
+import api from '../API/api';
+import { AuthContext } from '../auth/AuthContext';
+import uploadImageToCloudinary from '../cloudinary/cloudinary';
 
 const AdminProfile = () => {
-  const [status, setStatus] = useState('Activated')
-  const [isEditing, setIsEditing] = useState(false)
-  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const { user } = useContext(AuthContext);
+  const [shopImage, setShopImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(''); // Store image preview URL
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [isEditing, setIsEditing] = useState(false); // Track editing state
+  const [status, setStatus] = useState('Activated');
 
   const [formData, setFormData] = useState({
-    name: 'Kalonji Sporer',
-    email: 'ursula.moore@example.org',
-    phone: '+19929977344',
-    dob: '1992-07-03',
-    privateNotes: 'Private notes are only visible to admins.'
-  })
+    name: '',
+    email: '',
+    phone: '',
+    avatar: '',
+    accountType: ''
+  });
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  })
+  // Fetch User Details
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const response = await api.get(`/users/profile/${user.id}`);
+        setFormData({
+          name: response.data.user.fullName,
+          email: response.data.user.email,
+          phone: response.data.user.phoneNumber,
+          avatar: response.data.user.shopLogo, // Display admin's image
+          accountType: response.data.user.accountType
+        });
+        console.log(response.data);
+        
+        setPreviewImage(response.data.user.shopLogo); // Set the initial avatar preview
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+      }
+    };
 
-  const handleStatusChange = event => {
-    setStatus(event.target.value)
-  }
+    fetchUserDetails();
+  }, [user.id]);
 
+  // Handle Input Change
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Handle Image Change
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedImage = e.target.files[0];
+      setShopImage(selectedImage);
+      setPreviewImage(URL.createObjectURL(selectedImage)); // Set image preview
+    }
+  };
+
+  // Handle Edit Button Click
   const handleEditToggle = () => {
-    setIsEditing(!isEditing)
-  }
+    setIsEditing(!isEditing); // Toggle edit mode
+  };
 
-  const handlePasswordChangeToggle = () => {
-    setIsChangingPassword(!isChangingPassword)
-  }
+  // Handle Update
+  const updateUser = async () => {
+    try {
+      let avatarUrl = formData.avatar;
 
-  const handleInputChange = e => {
-    const { name, value } = e.target
-    setFormData(prevState => ({ ...prevState, [name]: value }))
-  }
+      // If a new image is selected, upload to Cloudinary
+      if (shopImage) {
+        avatarUrl = await uploadImageToCloudinary(shopImage);
+        if (!avatarUrl) {
+          throw new Error('Image upload failed');
+        }
+      }
 
-  const handlePasswordChange = e => {
-    const { name, value } = e.target
-    setPasswordData(prevState => ({ ...prevState, [name]: value }))
-  }
+      const updatedData = {
+        ...formData,
+        shopLogo: avatarUrl, // Update formData with the new image URL
+      };
 
-  const handleSubmitPasswordChange = () => {
-    // Handle password change logic here
-    // Validate the new password, current password, and confirm password
-    // Ensure new password and confirm password match
-    // Call API to change password or show an error message if needed
-    console.log(passwordData)
-  }
+      // Send update request to the server
+      const response = await api.put(`/users/${user.id}/profile`, updatedData, {
+        withCredentials: true
+      });
+
+      console.log(response.data,"put");
+      
+
+      // Show success message
+      setSnackbarMessage('Profile updated successfully!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      setIsEditing(false); // Disable editing after successful update
+      setPreviewImage(avatarUrl); // Set the final image URL after save
+    } catch (error) {
+      // Show error message
+      setSnackbarMessage('Failed to update profile.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      console.error(error);
+    }
+  };
+
+  // Handle Snackbar Close
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
 
   return (
-    <Box sx={{ padding: { xs: 1, sm: 2 }, mt: 2 }}>
-      <Grid container spacing={3}>
+    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 2, mb: 2 }}>
             <Typography variant='h6' gutterBottom>
@@ -78,7 +143,7 @@ const AdminProfile = () => {
                   name='name'
                   value={formData.name}
                   onChange={handleInputChange}
-                  InputProps={{ readOnly: !isEditing }}
+                  InputProps={{ readOnly: !isEditing }} // Editable when isEditing is true
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -104,80 +169,14 @@ const AdminProfile = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Date of birth'
-                  type='date'
-                  name='dob'
-                  value={formData.dob}
-                  onChange={handleInputChange}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ readOnly: !isEditing }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label='Private notes'
-                  name='privateNotes'
-                  multiline
-                  rows={4}
-                  value={formData.privateNotes}
-                  onChange={handleInputChange}
-                  InputProps={{ readOnly: !isEditing }}
+                  label='Account Type'
+                  name='accountType'
+                  value={formData.accountType}
+                  InputProps={{ readOnly: true }} // Read-only field for account type
                 />
               </Grid>
             </Grid>
           </Paper>
-
-          {isChangingPassword && (
-            <Paper sx={{ p: 2, mb: 2 }}>
-              <Typography variant='h6' gutterBottom>
-                Change Password
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='Current Password'
-                    type='password'
-                    name='currentPassword'
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordChange}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='New Password'
-                    type='password'
-                    name='newPassword'
-                    value={passwordData.newPassword}
-                    onChange={handlePasswordChange}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='Confirm New Password'
-                    type='password'
-                    name='confirmPassword'
-                    value={passwordData.confirmPassword}
-                    onChange={handlePasswordChange}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Button
-                    variant='contained'
-                    color='primary'
-                    fullWidth
-                    onClick={handleSubmitPasswordChange}
-                  >
-                    Change Password
-                  </Button>
-                </Grid>
-              </Grid>
-            </Paper>
-          )}
         </Grid>
 
         <Grid item xs={12} md={4}>
@@ -194,11 +193,16 @@ const AdminProfile = () => {
               }}
             >
               <Avatar
-                alt='Kalonji Sporer'
-                src='/api/placeholder/150'
-                sx={{ width: 100, height: 100, mb: 2 }}
+                alt={formData.name}
+                src={previewImage} // Display the preview image
+                sx={{ width: 100, height: 100, mb: 2, borderRadius: '50%' }}
               />
-              <Button variant='contained'>Choose Image</Button>
+              {isEditing && (
+                <Button variant='contained' component='label'>
+                  Choose Image
+                  <input type='file' hidden onChange={handleImageChange} />
+                </Button>
+              )}
             </Box>
           </Paper>
 
@@ -209,33 +213,44 @@ const AdminProfile = () => {
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ mb: 2 }}>
               <Typography variant='subtitle1'>Status</Typography>
-              <Select value={status} onChange={handleStatusChange} fullWidth>
+              <Select
+                value={status}
+                onChange={e => setStatus(e.target.value)}
+                fullWidth
+                disabled={!isEditing}
+              >
                 <MenuItem value='Activated'>Activated</MenuItem>
-                <MenuItem value='Deactivated'>Deactivated</MenuItem>
+                
               </Select>
             </Box>
             <Button
               variant={isEditing ? 'contained' : 'outlined'}
               color='primary'
               fullWidth
-              onClick={handleEditToggle}
+              onClick={isEditing ? updateUser : handleEditToggle}
             >
               {isEditing ? 'Save Changes' : 'Edit Profile'}
-            </Button>
-            <Button
-              variant='outlined'
-              color='secondary'
-              fullWidth
-              sx={{ mt: 2 }}
-              onClick={handlePasswordChangeToggle}
-            >
-              {isChangingPassword ? 'Cancel' : 'Change Password'}
             </Button>
           </Paper>
         </Grid>
       </Grid>
-    </Box>
-  )
-}
 
-export default AdminProfile
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+};
+
+export default AdminProfile;

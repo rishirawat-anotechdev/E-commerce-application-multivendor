@@ -4,7 +4,7 @@ import LayoutPage from './common/layout/LayoutPage';
 import ProtectedRoute from './auth/ProtectedRoutes';
 import { Box, CircularProgress } from '@mui/material';
 
-import GuestRoute from './auth/GuestRoute';
+
 import RedirectIfAuthenticated from './auth/GuestRoute';
 import UserProfile from './components/Userprofile';
 import SingleProduct from './components/AllProducts/SingleProduct';
@@ -46,8 +46,8 @@ const CategoriesTable = lazy(() => import('./admin/Cateogories/CategoriesTables'
 const VendorLayout = lazy(() => import('./vendor/VendorLayout'));
 const VendorDashboard = lazy(() => import('./vendor/VendorDashboard'));
 const VendorProducts = lazy(() => import('./vendor/VendorProuducts'));
-const VendorProductEdit = lazy(() => import('./vendor/VendorProductEdit'));
-const VendorProductInfo = lazy(() => import('./vendor/VendorProductinfo'));
+
+const VendorProductInfo = lazy(() => import('./vendor/VendorProductInfo'));
 const VendorRevenue = lazy(() => import('./vendor/VendorRevenue'));
 const VendorOrder = lazy(() => import('./vendor/VendorOrder'));
 const VendorCategory = lazy(() => import('./vendor/VendorCateogories/VendorCategory'));
@@ -77,39 +77,40 @@ const App = () => {
   return (
 
 
-    <Suspense fallback={<LoadingFallback />}>
+  
       <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<LayoutPage><HomePage /></LayoutPage>} />
-        <Route path="/homepage" element={<LayoutPage><HomePage /></LayoutPage>} />
-        <Route path="/product/:productId" element={<LayoutPage><SingleProduct /></LayoutPage>} />
-        {/* Protected routes that require login */}
-        <Route element={<ProtectedRoute allowedRoles={['User']} />}>
-          <Route path="/cart" element={<LayoutPage><CartPage /></LayoutPage>} />
-          <Route path="/checkout/:userId" element={<LayoutPage><CheckoutForm /></LayoutPage>} />
-          <Route path="/userProfile/:userId" element={<LayoutPage><UserProfile /></LayoutPage>} />
+       <Route path="/" element={<LayoutPage><Suspense fallback={<LoadingFallback />}><HomePage /></Suspense></LayoutPage>} />
+      <Route path="/homepage" element={<LayoutPage><Suspense fallback={<LoadingFallback />}><HomePage /></Suspense></LayoutPage>} />
+      <Route path="/product/:productId" element={<LayoutPage><Suspense fallback={<LoadingFallback />}><SingleProduct /></Suspense></LayoutPage>} />
+      
+      {/* Protected routes that require login */}
+      <Route element={<ProtectedRoute allowedRoles={['User']} />}>
+        <Route path="/cart" element={<LayoutPage><Suspense fallback={<LoadingFallback />}><CartPage /></Suspense></LayoutPage>} />
+        <Route path="/checkout/:userId" element={<LayoutPage><Suspense fallback={<LoadingFallback />}><CheckoutForm /></Suspense></LayoutPage>} />
+        <Route path="/userProfile/:userId" element={<LayoutPage><Suspense fallback={<LoadingFallback />}><UserProfile /></Suspense></LayoutPage>} />
+      </Route>
 
+      <Route
+        path="/login"
+        element={
+          <RedirectIfAuthenticated>
+            <LayoutPage>
+              <Suspense fallback={<LoadingFallback />}><LoginPage /></Suspense>
+            </LayoutPage>
+          </RedirectIfAuthenticated>
+        }
+      />
 
-        </Route>
-       
-
-        <Route
-          path="/login"
-          element={
-            <RedirectIfAuthenticated>
-              <LayoutPage><LoginPage /></LayoutPage>
-            </RedirectIfAuthenticated>
-          }
-        />
-
-        <Route
-          path="/register"
-          element={
-            <RedirectIfAuthenticated>
-              <LayoutPage><RegisterPage /></LayoutPage>
-            </RedirectIfAuthenticated>
-          }
-        />
+      <Route
+        path="/register"
+        element={
+          <RedirectIfAuthenticated>
+            <LayoutPage>
+              <Suspense fallback={<LoadingFallback />}><RegisterPage /></Suspense>
+            </LayoutPage>
+          </RedirectIfAuthenticated>
+        }
+      />
 
         {/* Admin protected routes */}
         <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
@@ -129,11 +130,12 @@ const App = () => {
             <Route path="transactions" element={<TransactionsPage />} />
             <Route path="payments" element={<PaymentMethods />} />
             <Route path="settings" element={<SettingsPage />} />
-            <Route path="product-info/:id" element={<ProductInfo />} />
-            <Route path="customer-profile/:id" element={<CustomerProfile />} />
-            <Route path="vendor-profile" element={<VendorProfile />} />
+            <Route path="product-add" element={<ProductInfo />} />
+            <Route path="product-info/:productId" element={<ProductInfo />} />
+            <Route path="user-profile/:userId" element={<CustomerProfile />} />
+            <Route path="vendor-profile/:userId" element={<VendorProfile />} />
             <Route path="admin-profile" element={<AdminProfile />} />
-            <Route path="products/category/:categoryName" element={<CategoriesTable />} />
+           
             <Route path="products/subcategory/:subcategoryName" element={<CategoriesTable />} />
           </Route>
         </Route>
@@ -144,7 +146,8 @@ const App = () => {
             <Route index element={<VendorDashboard />} />
             <Route path="dashboard" element={<VendorDashboard />} />
             <Route path="products" element={<VendorProducts />} />
-            <Route path="products-info/:id" element={<VendorProductEdit />} />
+            <Route path="products-info" element={<VendorProductInfo />} />
+            <Route path="products-info/:productId" element={<VendorProductInfo />} />
             <Route path="revenues" element={<VendorRevenue />} />
             <Route path="orders" element={<VendorOrder />} />
             <Route path="categories" element={<VendorCategory />} />
@@ -158,10 +161,10 @@ const App = () => {
         </Route>
 
         {/* Catch all - 404 */}
-        <Route path="/404" element={<PageNotFound />} />
-        <Route path="*" element={<PageNotFound />} />
+        <Route path="/404" element={<Suspense fallback={<LoadingFallback />}><PageNotFound /></Suspense>} />
+      <Route path="*" element={<Suspense fallback={<LoadingFallback />}><PageNotFound /></Suspense>} />
       </Routes>
-    </Suspense>
+    
 
   );
 };

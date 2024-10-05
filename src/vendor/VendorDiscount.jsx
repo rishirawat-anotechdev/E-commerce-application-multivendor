@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   TextField,
-  MenuItem,
   Button,
   Checkbox,
   FormControlLabel,
@@ -12,268 +11,247 @@ import {
   FormControl,
   Typography,
   IconButton,
-  RadioGroup,
-  Radio,
-  Paper,
-  Divider
+  Snackbar,
+  Alert,
+  MenuItem
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import api from '../API/api'; // Adjust the path as necessary
 
 const VendorDiscount = () => {
-  const [couponCode, setCouponCode] = React.useState('');
-  const [couponDescription, setCouponDescription] = React.useState('');
-  const [neverExpired, setNeverExpired] = React.useState(false);
-  const [startDate, setStartDate] = React.useState(dayjs());
-  const [endDate, setEndDate] = React.useState(dayjs().add(1, 'month'));
-  const [discountPercentage, setDiscountPercentage] = React.useState(10);
-  const [maxDiscountAmount, setMaxDiscountAmount] = React.useState(100);
-  const [minPurchaseAmount, setMinPurchaseAmount] = React.useState(200);
-  const [usageLimit, setUsageLimit] = React.useState(100);
-  const [applyCategory, setApplyCategory] = React.useState('');
-  const [applySubCategory, setApplySubCategory] = React.useState('');
-  const [applyProduct, setApplyProduct] = React.useState('');
-  const [couponType, setCouponType] = React.useState('allOrders');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDescription, setCouponDescription] = useState('');
+  const [neverExpired, setNeverExpired] = useState(false);
+  const [startDate, setStartDate] = useState(dayjs());
+  const [endDate, setEndDate] = useState(dayjs().add(1, 'month'));
+  const [discountPercentage, setDiscountPercentage] = useState(10);
+  const [maxDiscountAmount, setMaxDiscountAmount] = useState(100);
+  const [minPurchaseAmount, setMinPurchaseAmount] = useState(200);
+  const [usageLimit, setUsageLimit] = useState(100);
+  const [applyProduct, setApplyProduct] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [products, setProducts] = useState([]);
 
-  const categories = ['Electronics', 'Fashion', 'Groceries'];
-  const subCategories = ['Smartphones', 'Laptops', 'Clothing'];
-  const products = ['iPhone 14', 'MacBook Pro', 'Nike Shoes'];
+  // Fetch vendor's products 
+  useEffect(() => {
+    const fetchVendorProducts = async () => {
+      try {
+        const response = await api.get('/vendor/products', {
+          withCredentials: true,
+        });
+        setProducts(response.data);
+      } catch (error) {
+        setSnackbarMessage(error.response?.data?.message || 'Error fetching products');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    };
+
+    fetchVendorProducts();
+  }, []);
 
   const generateRandomCode = () => {
     const randomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
     setCouponCode(randomCode);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const discountData = {
       couponCode,
-      couponDescription,
-      startCouponDate: startDate.toISOString(),
-      endCouponDate: neverExpired ? null : endDate.toISOString(),
+      description: couponDescription,
+      startDate: startDate.toISOString(),
+      endDate: neverExpired ? null : endDate.toISOString(),
       discountPercentage,
       maxDiscountAmount,
       minPurchaseAmount,
       usageLimit,
-      applyCategory: couponType === 'allOrders' ? 'All Orders' : applyCategory,
-      applySubCategory: couponType === 'allOrders' ? null : applySubCategory,
-      applyProduct: couponType === 'allOrders' ? null : applyProduct
+      applyProduct,
     };
 
-    console.log(discountData);
+    try {
+      const response = await api.post('/coupon/discount', discountData, {
+        withCredentials: true,
+      });
+
+      console.log(response.data);
+      
+     
+      setSnackbarMessage(response?.data?.message);
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      resetForm();
+    } catch (error) {
+      setSnackbarMessage('Failed to create discount: ' + (error.response?.data?.error || 'Unknown error'));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  };
+
+  const resetForm = () => {
+    setCouponCode('');
+    setCouponDescription('');
+    setNeverExpired(false);
+    setStartDate(dayjs());
+    setEndDate(dayjs().add(1, 'month'));
+    setDiscountPercentage(10);
+    setMaxDiscountAmount(100);
+    setMinPurchaseAmount(200);
+    setUsageLimit(100);
+    setApplyProduct('');
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   return (
-    <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: '#f5f5f5' }}>
-      <Paper elevation={0} sx={{ p: 3, borderRadius: 0 }}>
-        <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
-          Discount Configuration
-        </Typography>
+    <Box sx={{ p: { xs: 1, sm: 2 }, mt: 2, backgroundColor: '#fff' }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={8}>
+          <Typography variant='h6'>Create Discount</Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TextField
-                label="Create coupon code"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                fullWidth
-                variant="outlined"
-              />
-              <IconButton
-                onClick={generateRandomCode}
-                sx={{
-                  backgroundColor: '#e3f2fd',
-                  '&:hover': { backgroundColor: '#bbdefb' },
-                  color: '#2ecc71',
-                }}
-              >
-                <AutoAwesomeIcon />
-              </IconButton>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TextField
-              label="Coupon Description"
-              value={couponDescription}
-              onChange={(e) => setCouponDescription(e.target.value)}
+              label='Coupon Code'
+              value={couponCode}
+              onChange={e => setCouponCode(e.target.value)}
               fullWidth
-              variant="outlined"
-              multiline
-              rows={1}
+              sx={{ mb: 2 }}
             />
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <TextField
-              label="Discount Percentage"
-              type="number"
-              value={discountPercentage}
-              onChange={(e) => setDiscountPercentage(Number(e.target.value))}
-              fullWidth
-              variant="outlined"
-              InputProps={{ endAdornment: <Typography variant="body2">%</Typography> }}
-            />
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <TextField
-              label="Max Discount Amount"
-              type="number"
-              value={maxDiscountAmount}
-              onChange={(e) => setMaxDiscountAmount(Number(e.target.value))}
-              fullWidth
-              variant="outlined"
-              InputProps={{ startAdornment: <Typography variant="body2">$</Typography> }}
-            />
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <TextField
-              label="Min Purchase Amount"
-              type="number"
-              value={minPurchaseAmount}
-              onChange={(e) => setMinPurchaseAmount(Number(e.target.value))}
-              fullWidth
-              variant="outlined"
-              InputProps={{ startAdornment: <Typography variant="body2">$</Typography> }}
-            />
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <TextField
-              label="Usage Limit"
-              type="number"
-              value={usageLimit}
-              onChange={(e) => setUsageLimit(Number(e.target.value))}
-              fullWidth
-              variant="outlined"
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              Coupon Validity
-            </Typography>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateTimePicker
-                label="Start date"
-                value={startDate}
-                onChange={setStartDate}
-                renderInput={(params) => <TextField {...params} fullWidth variant="outlined" />}
-              />
-            </LocalizationProvider>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateTimePicker
-                label="End date"
-                value={endDate}
-                onChange={setEndDate}
-                renderInput={(params) => <TextField {...params} fullWidth variant="outlined" />}
-                disabled={neverExpired}
-              />
-            </LocalizationProvider>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <FormControlLabel
-              control={<Checkbox checked={neverExpired} onChange={() => setNeverExpired(!neverExpired)} />}
-              label="Never expired?"
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              Coupon Type
-            </Typography>
-            <RadioGroup
-              row
-              value={couponType}
-              onChange={(e) => setCouponType(e.target.value)}
+            <IconButton
+              onClick={generateRandomCode}
+              sx={{
+                mb: 2,
+                backgroundColor: "transparent",
+                '&:hover': {
+                  backgroundColor: "rgba(46, 204, 113, 0.1)",
+                },
+                color: "#2ecc71",
+              }}
             >
-              <FormControlLabel value="allOrders" control={<Radio />} label="Apply to All Orders" />
-              <FormControlLabel value="specific" control={<Radio />} label="Apply to Specific Products/Categories" />
-            </RadioGroup>
-          </Grid>
+              <AutoAwesomeIcon />
+            </IconButton>
+          </Box>
 
-          {couponType === 'specific' && (
-            <>
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={applyCategory}
-                    onChange={(e) => setApplyCategory(e.target.value)}
-                    label="Category"
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category} value={category}>
-                        {category}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
+          <TextField
+            label='Coupon Description'
+            value={couponDescription}
+            onChange={e => setCouponDescription(e.target.value)}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
 
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel>Subcategory</InputLabel>
-                  <Select
-                    value={applySubCategory}
-                    onChange={(e) => setApplySubCategory(e.target.value)}
-                    label="Subcategory"
-                  >
-                    {subCategories.map((subCategory) => (
-                      <MenuItem key={subCategory} value={subCategory}>
-                        {subCategory}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
+          <TextField
+            label='Discount Percentage'
+            type='number'
+            value={discountPercentage}
+            onChange={e => setDiscountPercentage(Number(e.target.value))}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
 
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel>Product</InputLabel>
-                  <Select
-                    value={applyProduct}
-                    onChange={(e) => setApplyProduct(e.target.value)}
-                    label="Product"
-                  >
-                    {products.map((product) => (
-                      <MenuItem key={product} value={product}>
-                        {product}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </>
-          )}
+          <TextField
+            label='Max Discount Amount'
+            type='number'
+            value={maxDiscountAmount}
+            onChange={e => setMaxDiscountAmount(Number(e.target.value))}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            label='Min Purchase Amount'
+            type='number'
+            value={minPurchaseAmount}
+            onChange={e => setMinPurchaseAmount(Number(e.target.value))}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            label='Usage Limit'
+            type='number'
+            value={usageLimit}
+            onChange={e => setUsageLimit(Number(e.target.value))}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+
         </Grid>
 
-        <Box sx={{ mt: 4, textAlign: 'right' }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSave}
-            size="large"
-            sx={{ minWidth: 200, fontWeight: 'bold' }}
-          >
-            Save
+        <Grid container spacing={3} item xs={12} md={8}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Grid container item spacing={2}>
+              <Grid item xs={12} md={6}>
+                <DateTimePicker
+                  label='Start Date'
+                  value={startDate}
+                  onChange={setStartDate}
+                  renderInput={params => <TextField {...params} fullWidth />}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <DateTimePicker
+                  label='End Date'
+                  value={endDate}
+                  onChange={setEndDate}
+                  renderInput={params => <TextField {...params} fullWidth />}
+                  disabled={neverExpired}
+                />
+              </Grid>
+            </Grid>
+          </LocalizationProvider>
+
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={neverExpired}
+                  onChange={() => setNeverExpired(!neverExpired)}
+                />
+              }
+              label='Never Expired'
+            />
+          </Grid>
+        </Grid>
+
+        <Grid item xs={12} md={8}>
+  <FormControl fullWidth sx={{ mb: 2 }}>
+    <InputLabel id='product-label'>Select Product</InputLabel>
+    <Select
+      labelId='product-label'
+      value={applyProduct} // This will show the selected product
+      onChange={e => setApplyProduct(e.target.value)} // Update the applyProduct state
+      label='Select Product' // Ensure the label is provided
+    >
+      {products.map(product => (
+        <MenuItem key={product._id} value={product._id}>
+          {product.name} {/* Display the product name in the dropdown */}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+</Grid>
+
+
+        <Grid item xs={12} md={8}>
+          <Button variant='contained' onClick={handleSave}>
+            Save Discount
           </Button>
-        </Box>
-      </Paper>
+        </Grid>
+      </Grid>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import {
   Box,
   IconButton,
@@ -11,35 +11,49 @@ import {
   TableRow,
   TextField,
   TablePagination,
-  Button,
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-
-// Dummy data for transactions
-const transactions = [
-  { id: 45, chargeId: 'RGFKLICJ0T', payerName: 'Kaleigh Sporer', amount: '2109.00 USD', paymentChannel: 'Mollie', status: 'Completed', createdAt: '2024-09-04' },
-  { id: 44, chargeId: 'Z42AXCCAI1E', payerName: 'Kaleigh Sporer', amount: '2137.00 USD', paymentChannel: 'Paystack', status: 'Completed', createdAt: '2024-09-04' },
-  { id: 43, chargeId: 'NTW4O3QREV', payerName: 'Kaleigh Sporer', amount: '1306.00 USD', paymentChannel: 'PayPal', status: 'Completed', createdAt: '2024-09-04' },
-  { id: 42, chargeId: 'Y2ETNUCKAV', payerName: 'Adela Rowe PhD', amount: '6327.00 USD', paymentChannel: 'SslCommerz', status: 'Completed', createdAt: '2024-09-04' },
-  { id: 41, chargeId: 'MI7QN6HJPO', payerName: 'Adela Rowe PhD', amount: '4274.00 USD', paymentChannel: 'Bank Transfer', status: 'Pending', createdAt: '2024-09-04' },
-  { id: 40, chargeId: 'SONKA67XQF', payerName: 'Josie Hilpert', amount: '8800.00 USD', paymentChannel: 'SslCommerz', status: 'Completed', createdAt: '2024-09-04' },
-  { id: 39, chargeId: 'FSWK95QGPU', payerName: 'Adela Rowe PhD', amount: '1762.00 USD', paymentChannel: 'SslCommerz', status: 'Completed', createdAt: '2024-09-04' },
-];
+  Button
+} from '@mui/material'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
+import api from '../API/api'
 
 const TransactionsPage = () => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
+  const [transactions, setTransactions] = useState([])
+
+  // Fetch transactions from API
+  const getTransactions = async () => {
+    try {
+      const response = await api.get('admin/orders', { withCredentials: true })
+      const fetchedTransactions = response.data.orders.map((order) => ({
+        id: order._id,
+        chargeId: order.razorpayOrderId || 'N/A',
+        payerName: order.user?.fullName || 'N/A',
+        amount: `$${(order.totalPrice / 100).toFixed(2)} USD` || 'N/A',
+        paymentChannel: order.paymentMethod || 'N/A',
+        status: order.paymentStatus || 'N/A',
+        createdAt: new Date(order.createdAt).toLocaleDateString()
+      }))
+      setTransactions(fetchedTransactions)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  useEffect(() => {
+    getTransactions()
+  }, [])
 
   // Handle pagination
   const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+    setPage(newPage)
+  }
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0)
+  }
 
   return (
     <>
@@ -53,6 +67,7 @@ const TransactionsPage = () => {
         <Table>
           <TableHead>
             <TableRow>
+            <TableCell>Sr No.</TableCell>
               <TableCell>ID</TableCell>
               <TableCell>Charge ID</TableCell>
               <TableCell>Payer Name</TableCell>
@@ -66,13 +81,14 @@ const TransactionsPage = () => {
           <TableBody>
             {transactions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((transaction, index) => (
               <TableRow key={transaction.id} style={{ backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white' }}>
+                <TableCell>{index + 1}</TableCell>
                 <TableCell>{transaction.id}</TableCell>
                 <TableCell>{transaction.chargeId}</TableCell>
                 <TableCell>{transaction.payerName}</TableCell>
                 <TableCell>{transaction.amount}</TableCell>
                 <TableCell>{transaction.paymentChannel}</TableCell>
                 <TableCell>
-                  <Button variant="contained" size="small" color={transaction.status === 'Completed' ? 'success' : 'warning'}>
+                  <Button variant="contained" size="small" color={transaction.status === 'Paid' ? 'success' : 'warning'}>
                     {transaction.status}
                   </Button>
                 </TableCell>
@@ -97,7 +113,7 @@ const TransactionsPage = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
     </>
-  );
+  )
 }
 
 export default TransactionsPage

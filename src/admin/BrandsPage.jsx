@@ -1,106 +1,70 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  InputAdornment,
-  Button,
-  IconButton,
-  Divider,
-  Paper
-} from '@mui/material'
-import { Search, Edit, Delete } from '@mui/icons-material'
-import { Link } from 'react-router-dom'
+  Box, Chip, Table, TableBody, TableCell, TableContainer,
+  TableHead, TablePagination, TableRow, TextField, InputAdornment,
+  Button, IconButton, Paper
+} from '@mui/material';
+import { Search, Edit, Delete } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+import api from '../API/api';
 
-// Fake data for the table
-const rows = [
-  {
-    id: 1,
-    name: 'Persxion',
-    isFeatured: 'Yes',
-    createdAt: '2024-07-22',
-    status: 'Published'
-  },
-  {
-    id: 2,
-    name: 'Hiching',
-    isFeatured: 'Yes',
-    createdAt: '2024-07-22',
-    status: 'Published'
-  },
-  {
-    id: 3,
-    name: 'Kepslo',
-    isFeatured: 'Yes',
-    createdAt: '2024-07-22',
-    status: 'Published'
-  },
-  {
-    id: 4,
-    name: 'Groneba',
-    isFeatured: 'Yes',
-    createdAt: '2024-07-22',
-    status: 'Published'
-  },
-  {
-    id: 5,
-    name: 'Babian',
-    isFeatured: 'Yes',
-    createdAt: '2024-07-22',
-    status: 'Published'
-  },
-  {
-    id: 6,
-    name: 'Valorant',
-    isFeatured: 'Yes',
-    createdAt: '2024-07-22',
-    status: 'Published'
-  },
-  {
-    id: 7,
-    name: 'Pure',
-    isFeatured: 'Yes',
-    createdAt: '2024-07-22',
-    status: 'Published'
-  }
-]
+function BrandsPage() {
+  const [brands, setBrands] = useState([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-function BrandsPage () {
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(5)
+  // Fetch brands from API
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const response = await api.get('/brands');
+        setBrands(response.data);
+      } catch (error) {
+        console.error('Failed to fetch brands', error);
+      }
+    };
+    fetchBrands();
+  }, []);
 
+  // Handle search
   const handleSearchChange = event => {
-    setSearch(event.target.value)
-  }
+    setSearch(event.target.value);
+  };
 
+  // Handle delete brand
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`/api/brands/${id}`);
+      setBrands(brands.filter(brand => brand._id !== id));
+    } catch (error) {
+      console.error('Failed to delete brand', error);
+    }
+  };
+
+  // Handle pagination
   const handleChangePage = (event, newPage) => {
-    setPage(newPage)
-  }
+    setPage(newPage);
+  };
 
   const handleChangeRowsPerPage = event => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
-  }
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
-  const filteredRows = rows.filter(row =>
-    row.name.toLowerCase().includes(search.toLowerCase())
-  )
+  // Filter rows based on search input
+
+  const filteredRows = brands.filter(row => 
+    row.name.toLowerCase().includes(search.toLowerCase()) ||
+    row._id.toString().toLowerCase().includes(search.toLowerCase())  // Check for ID match
+  );
 
   return (
-    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2,  }}>
+    <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
       {/* Search Bar */}
-      <Box
-        sx={{ display: 'flex', justifyContent: 'space-between', p: 4,  backgroundColor: '#fff' }}
-      >
-        <TextField
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', py:4, px:2, backgroundColor: '#fff' }}>
+      <TextField
           variant='outlined'
           size='small'
           placeholder='Search by brands name'
@@ -115,52 +79,48 @@ function BrandsPage () {
           }}
         />
         <Box>
-          <Link to={'/admin/product-info/:id'}>
-          <Button variant='contained'>Create</Button>
+          <Link to={'/admin/product-info/create'}>
+            <Button variant='contained'>Create</Button>
           </Link>
-         
         </Box>
       </Box>
-     
+
       {/* Table */}
-      <TableContainer component={Paper} sx={{ mt:4  }} >
+      <TableContainer component={Paper} sx={{ mt: 4 }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell fontWeight='bold'>ID</TableCell>
-              <TableCell fontWeight='bold'>Name</TableCell>
-              <TableCell fontWeight='bold'>Is Featured</TableCell>
-              <TableCell fontWeight='bold'>Created At</TableCell>
-              <TableCell fontWeight='bold'>Status</TableCell>
-              <TableCell fontWeight='bold'>Operations</TableCell>
+            <TableCell>Sr No.</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Is Featured</TableCell>
+              <TableCell>Created At</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Operations</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredRows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row, index) => (
-                <TableRow
-                  key={row.id}
-                  style={{
-                    backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white'
-                  }}
-                >
-                  <TableCell>{row.id}</TableCell>
+                <TableRow key={row._id} style={{ backgroundColor: index % 2 === 0 ? '#f6f8fb' : 'white' }}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{row._id}</TableCell>
                   <TableCell>{row.name}</TableCell>
                   <TableCell>
-                    <Chip label={row.isFeatured} color='success' />
+                    <Chip label={row.isFeatured ? 'Yes' : 'No'} color='success' />
                   </TableCell>
-                  <TableCell>{row.createdAt}</TableCell>
+                  <TableCell>{new Date(row.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Chip label={row.status} color='success' />
                   </TableCell>
-                  <TableCell sx={{whiteSpace:"nowrap"}}>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <IconButton color='primary'>
-                 <Link to={'/admin/product-info/:id'}>
-                 <Edit />
-                 </Link>
+                      <Link to={`/admin/product-info/${row._id}`}>
+                        <Edit />
+                      </Link>
                     </IconButton>
-                    <IconButton color='error'>
+                    <IconButton color='error' onClick={() => handleDelete(row._id)}>
                       <Delete />
                     </IconButton>
                   </TableCell>
@@ -181,7 +141,7 @@ function BrandsPage () {
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
     </Box>
-  )
+  );
 }
 
-export default BrandsPage
+export default BrandsPage;

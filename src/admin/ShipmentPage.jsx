@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Box,
   Table,
@@ -15,37 +15,9 @@ import {
   Paper
 } from '@mui/material'
 import { Edit, Delete, Search } from '@mui/icons-material'
+import api from '../API/api'
 
-const orders = [
-  {
-    id: 18,
-    orderId: '#10000027',
-    customer: 'Josie Hilpert',
-    shipping: '$0.00',
-    status: 'Delivered',
-    codStatus: 'Not available',
-    createdAt: '2024-09-04'
-  },
-  {
-    id: 17,
-    orderId: '#10000026',
-    customer: 'Josie Hilpert',
-    shipping: '$0.00',
-    status: 'Approved',
-    codStatus: 'Not available',
-    createdAt: '2024-09-04'
-  },
-  {
-    id: 16,
-    orderId: '#10000024',
-    customer: 'Melody Effertz Jr.',
-    shipping: '$0.00',
-    status: 'Delivered',
-    codStatus: 'Not available',
-    createdAt: '2024-09-04'
-  }
-  // Add more data as needed
-]
+
 
 const ShipmentPage = () => {
   const [page, setPage] = useState(0)
@@ -55,6 +27,25 @@ const ShipmentPage = () => {
     customer: '',
     status: ''
   })
+  const [orders, setOrders] = useState([])
+
+  const getShipment = async () => {
+    try {
+      const response = await api.get('admin/orders', { withCredentials: true })
+      const fetchedOrders = response.data.orders.map((order) => ({
+        id: order._id,
+        orderId: order.razorpayOrderId || 'N/A',
+        customer: order.user?.fullName || 'N/A',
+        shipping: `$${(order.totalPrice / 100).toFixed(2)}` || '$0.00',
+        status: order.paymentStatus || 'N/A',
+        codStatus: 'Not available', // Placeholder since it's not in the response
+        createdAt: new Date(order.createdAt).toLocaleDateString()
+      }))
+      setOrders(fetchedOrders)
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   const handleChangePage = (event, newPage) => setPage(newPage)
   const handleChangeRowsPerPage = event =>
@@ -70,6 +61,10 @@ const ShipmentPage = () => {
       order.customer.toLowerCase().includes(filter.customer.toLowerCase()) &&
       (filter.status ? order.status === filter.status : true)
   )
+
+  useEffect(() => {
+    getShipment()
+  }, [])
 
   return (
     <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
@@ -130,6 +125,7 @@ const ShipmentPage = () => {
         <Table>
           <TableHead>
             <TableRow>
+            <TableCell fontWeight='bold'>Sr No.</TableCell>
               <TableCell fontWeight='bold'>ID</TableCell>
               <TableCell fontWeight='bold'>Order ID</TableCell>
               <TableCell fontWeight='bold'>Customer</TableCell>
@@ -143,13 +139,14 @@ const ShipmentPage = () => {
           <TableBody>
             {filteredOrders
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map(order => (
+              .map((order, index) => (
                 <TableRow
                   key={order.id}
                   style={{
                     backgroundColor: order.id % 2 === 0 ? '#f6f8fb' : 'white'
                   }}
                 >
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>{order.id}</TableCell>
                   <TableCell>{order.orderId}</TableCell>
                   <TableCell>{order.customer}</TableCell>

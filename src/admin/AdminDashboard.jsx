@@ -49,28 +49,7 @@ ChartJS.register(
 
 // Updated working India GeoJson URL
 
-// Fake data for top vendors
-const fakeVendors = [
-  { id: 1, name: 'Vendor A', sales: 15000 },
-  { id: 2, name: 'Vendor B', sales: 12000 },
-  { id: 3, name: 'Vendor C', sales: 10000 },
-  { id: 4, name: 'Vendor D', sales: 9000 },
-  { id: 5, name: 'Vendor E', sales: 8000 }
-]
 
-// Fake data for top products
-const fakeProducts = [
-  { id: 1, name: 'Product X', sales: 500 },
-  { id: 2, name: 'Product Y', sales: 450 },
-  { id: 3, name: 'Product Z', sales: 400 },
-  { id: 4, name: 'Product W', sales: 350 },
-  { id: 5, name: 'Product V', sales: 300 },
-  { id: 6, name: 'Product U', sales: 250 },
-  { id: 7, name: 'Product T', sales: 200 },
-  { id: 8, name: 'Product S', sales: 150 },
-  { id: 9, name: 'Product R', sales: 100 },
-  { id: 10, name: 'Product Q', sales: 50 }
-]
 
 const data = {
   labels: ['1 Day', '1 Week', '1 Month', '1 Year'],
@@ -408,10 +387,10 @@ const AdminDashboard = () => {
                         <TableCell component='th' scope='row'>
                           {vendor.vendorName}
                         </TableCell>
-                        <TableCell align='right'>
+                        <TableCell align='center'>
                           {vendor.totalProductsSold}
                         </TableCell>
-                        <TableCell align='right'>
+                        <TableCell align='center'>
                           ${vendor.totalRevenue.toLocaleString()}
                         </TableCell>
                       </TableRow>
@@ -452,11 +431,12 @@ const AdminDashboard = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Product Name</TableCell>
-                    <TableCell align='right'>Units Sold</TableCell>
+                    <TableCell align='left'>Units Sold</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {topProducts.map((product, index) => (
+                  {topProducts.length > 0 ? 
+                  ( topProducts.map((product, index) => (
                     <TableRow
                       key={product.productId}
                       style={{
@@ -466,9 +446,15 @@ const AdminDashboard = () => {
                       <TableCell component='th' scope='row'>
                         {product.name}
                       </TableCell>
-                      <TableCell align='right'>{product.totalSold}</TableCell>
+                      <TableCell align='left'>{product.totalSold}</TableCell>
                     </TableRow>
-                  ))}
+                  ))): (
+                    <TableRow>
+                      <TableCell colSpan={3} align='center'>
+                        No data available for the selected date range
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>

@@ -41,6 +41,8 @@ import {
   Tooltip,
   Legend
 } from 'chart.js'
+import api from '../API/api'
+import { Try } from '@mui/icons-material'
 
 // Register Chart.js components
 ChartJS.register(
@@ -59,113 +61,42 @@ const data = [
 
 const COLORS = ['#FFBB28', '#FF8042', '#00C49F', '#0088FE', '#FF00FF']
 
-function descendingComparator (a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) return -1
-  if (b[orderBy] > a[orderBy]) return 1
-  return 0
-}
 
-function getComparator (order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy)
-}
 
-const fakeOrders = [
-  {
-    id: '#0000045',
-    customer: 'Kaleigh Sporer',
-    amount: '$2,100.00',
-    paymentMethod: 'Mollie',
-    paymentStatus: 'Completed',
-    status: 'Completed',
-    createdAt: '2024-09-03',
-    store: 'Global Office'
-  },
-  {
-    id: '#0000043',
-    customer: 'Kaleigh Sporer',
-    amount: '$1,306.00',
-    paymentMethod: 'PayPal',
-    paymentStatus: 'Completed',
-    status: 'Completed',
-    createdAt: '2024-09-03',
-    store: 'GoPro'
-  },
-  {
-    id: '#0000044',
-    customer: 'Kaleigh Sporer',
-    amount: '$2,137.00',
-    paymentMethod: 'Paystack',
-    paymentStatus: 'Completed',
-    status: 'Completed',
-    createdAt: '2024-09-03',
-    store: 'Global Store'
-  },
-  {
-    id: '#0000041',
-    customer: 'Adela Rowe PhD',
-    amount: '$4,274.00',
-    paymentMethod: 'Bank Transfer',
-    paymentStatus: 'Pending',
-    status: 'Pending',
-    createdAt: '2024-09-03',
-    store: 'Global Store'
-  },
-  {
-    id: '#0000040',
-    customer: 'Josie Hilpert',
-    amount: '$1,132.00',
-    paymentMethod: 'Bank Transfer',
-    paymentStatus: 'Pending',
-    status: 'Pending',
-    createdAt: '2024-09-03',
-    store: 'Global Store'
-  },
-  {
-    id: '#0000039',
-    customer: 'Josie Hilpert',
-    amount: '$4,996.00',
-    paymentMethod: 'Stripe',
-    paymentStatus: 'Completed',
-    status: 'Pending',
-    createdAt: '2024-09-03',
-    store: 'GoPro'
-  },
-  {
-    id: '#0000038',
-    customer: 'Adela Rowe PhD',
-    amount: '$3,115.00',
-    paymentMethod: 'Bank Transfer',
-    paymentStatus: 'Pending',
-    status: 'Completed',
-    createdAt: '2024-09-02',
-    store: 'GoPro'
-  },
-  {
-    id: '#0000036',
-    customer: 'Vicky Bodnar',
-    amount: '$2,784.00',
-    paymentMethod: 'Razorpay',
-    paymentStatus: 'Completed',
-    status: 'Completed',
-    createdAt: '2024-09-02',
-    store: 'Young Shop'
-  }
-]
 
-const columns = [
-  { id: 'id', label: 'Id' },
-  { id: 'name', label: 'Name' },
-  { id: 'amount', label: 'Amount' },
-  { id: 'status', label: 'Status' },
-  { id: 'createdAt', label: 'Created At' }
-]
 
 const StatusChip = ({ status }) => {
   const color = status === 'Completed' ? 'success' : 'warning'
   return <Chip label={status} color={color} size='small' />
 }
+
+// Status Chip component
+const StatusChip2 = ({ status }) => {
+  let color;
+  switch (status) {
+    case 'Paid':
+      color = 'success';
+      break;
+    case 'Pending':
+      color = 'warning';
+      break;
+    case 'Failed':
+      color = 'error';
+      break;
+    case 'Completed':
+      color = 'primary';
+      break;
+    case 'Processing':
+      color = 'info';
+      break;
+    case 'Shipped':
+      color = 'secondary';
+      break;
+    default:
+      color = 'default';
+  }
+  return <Chip label={status || 'Unknown'} color={color} />;
+};
 
 
 
@@ -197,37 +128,68 @@ const initialLineData = {
   ]
 }
 
-let revenueValue = '6,785.9'
 
-const cardData = [
-  {
-    title: 'Orders',
-    value: 45,
-    color: '#1abc9c',
-    icon: <MdShoppingCart size={50} style={{ opacity: 0.2 }} />
-  },
-  {
-    title: 'Products',
-    value: 24,
-    color: '#3498db',
-    icon: <MdProductionQuantityLimits size={50} style={{ opacity: 0.2 }} />
-  },
-  {
-    title: 'Revenue',
-    value: `$${revenueValue}`,
-    color: '#1F618D',
-    icon: <MdRateReview size={50} style={{ opacity: 0.2 }} />
-  }
-]
+
+
 
 const VendorDashboard = ({ sidebarOpen }) => {
   const [order, setOrder] = useState('asc')
   const [orderBy, setOrderBy] = useState('customer')
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(5)
-
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [orders,  setOrders] = useState([])
   const [selectedDateRange, setSelectedDateRange] = useState([null, null])
   const [filteredLineData, setFilteredLineData] = useState(initialLineData)
+  const [topProducts, setTopProducts] = useState([]); // State for storing product data
+  const [searchId, setSearchId] = useState('');
+
+  
+
+  // dashboard states 
+  const [orderData, setOrderData ] = useState()
+  const [productData, setProductData ] = useState([])
+
+
+  const getOrders = async() => {
+         try {
+          const response = await api.get('/vendor/orders', 
+            {
+              withCredentials: true
+            }
+            
+          )
+          // console.log(response.data);
+          setOrders(response.data.orders || []);
+          setOrderData(response.data)
+          
+         } catch (error) {
+          console.log(error);
+          
+         }
+  }
+
+
+  const getProducts = async() => {
+    try {
+     const response = await api.get('/vendor/products', 
+       {
+         withCredentials: true
+       }
+       
+     )
+    // console.log("data",response.data);
+     setProductData(response.data)
+     
+    } catch (error) {
+     console.log(error);
+     
+    }
+}
+
+
+
 
   useEffect(() => {
     // Function to filter data based on date range
@@ -247,17 +209,106 @@ const VendorDashboard = ({ sidebarOpen }) => {
     filterDataByDateRange()
   }, [selectedDateRange])
 
-  const handleRequestSort = property => {
-    const isAsc = orderBy === property && order === 'asc'
-    setOrder(isAsc ? 'desc' : 'asc')
-    setOrderBy(property)
+
+
+
+
+
+const cardData = [
+  {
+    title: 'Orders',
+    value: orderData?.totalOrders,
+    color: '#1abc9c',
+    icon: <MdShoppingCart size={50} style={{ opacity: 0.2 }} />
+  },
+  {
+    title: 'Products',
+    value: productData?.length,
+    color: '#3498db',
+    icon: <MdProductionQuantityLimits size={50} style={{ opacity: 0.2 }} />
+  },
+  {
+    title: 'Revenue',
+    value: `$${orderData?.totalPaidRevenue + orderData?.totalPendingRevenue}`,
+    color: '#1F618D',
+    icon: <MdRateReview size={50} style={{ opacity: 0.2 }} />
   }
+]
 
-  const handleChangePage = (event, newPage) => setPage(newPage)
-  const handleChangeRowsPerPage = event =>
-    setRowsPerPage(parseInt(event.target.value, 10))
 
-  const sortedData = fakeOrders.slice().sort(getComparator(order, orderBy))
+  // Sorting orders based on selected column
+  const sortedOrders = orders.sort((a, b) => {
+    if (order === 'asc') {
+      return a[orderBy] > b[orderBy] ? 1 : -1;
+    }
+    return a[orderBy] < b[orderBy] ? 1 : -1;
+  });
+
+  // Search logic: filter data based on the search query
+  const filteredOrders = sortedOrders.filter(row => {
+    const searchStr = searchQuery.toLowerCase();
+    return (
+      (row.orderId?.toString().includes(searchStr)) || // Check if the orderId matches
+      (row.user?.name || '').toLowerCase().includes(searchStr) ||
+      (row.paymentStatus || '').toLowerCase().includes(searchStr)
+    );
+  });
+
+ 
+
+
+  const columns = [
+    { id: 'sn', label: 'Sr No.' },
+    { id: 'id', label: 'Product ID' },
+    { id: 'name', label: 'Product Name' },
+    { id: 'amount', label: 'Total Amount' },
+    { id: 'status', label: 'Payment Status' },
+    { id: 'createdAt', label: 'Last Sold' },
+  ];
+
+  // Fetch top selling products
+  const getTopSellingProduct = async () => {
+    try {
+      const response = await api.get('vendor/top-products', { withCredentials: true });
+      setTopProducts(response.data.topSellingProducts);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getTopSellingProduct();
+  }, []);
+
+  // Handle search functionality
+  const filteredData = topProducts.filter(product =>
+    product.id.toString().includes(searchId) // Filter by product ID
+  );
+
+  // Sorting (if required)
+  const handleRequestSort = (property) => {
+    // Sorting logic here if needed
+  };
+
+  // Handle page change
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  // Handle rows per page change
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+
+
+
+useEffect(() => {
+  getProducts()
+  getOrders()
+  getTopSellingProduct()
+}, [])
 
   return (
     <Box sx={{ py: { xs: 1, sm: 2 }, mt: 2 }}>
@@ -363,7 +414,7 @@ const VendorDashboard = ({ sidebarOpen }) => {
             </Box>
             <Typography variant='body2' color='textSecondary' sx={{ mt: 1 }}>
               <span style={{ color: '#FFBB28' }}>●</span> Items Earning Sales:
-              $140,357.00
+              {`$${orderData?.totalPaidRevenue + orderData?.totalPendingRevenue}`}
             </Typography>
           </Paper>
         </LocalizationProvider>
@@ -405,14 +456,14 @@ const VendorDashboard = ({ sidebarOpen }) => {
                 EARNINGS
               </Typography>
               <Typography variant='h6' color='primary'>
-                $6,768.00
+                {`$${orderData?.totalPaidRevenue + orderData?.totalPendingRevenue}`}
               </Typography>
             </Grid>
             <Grid item xs={6}>
               <Typography variant='body2' color='text.secondary'>
                 REVENUE
               </Typography>
-              <Typography variant='h6'>$6,768.00</Typography>
+              <Typography variant='h6'>{`$${orderData?.totalPaidRevenue + orderData?.totalPendingRevenue}`}</Typography>
             </Grid>
             <Grid item xs={6}>
               <Typography variant='body2' color='text.secondary'>
@@ -432,62 +483,65 @@ const VendorDashboard = ({ sidebarOpen }) => {
         </Paper>
       </Box>
 
-      <Paper elevation={3} sx={{ mt: 4 }}>
+          {/* Orders Table */}
+          <Paper elevation={3} sx={{ mt: 4 }}>
         <Typography variant='h4' gutterBottom sx={{ p: 2 }}>
-          Recent Orders
+          Recent Payments
         </Typography>
+
+        {/* Search Box */}
         <Box sx={{ px: 4 }}>
           <TextField
             fullWidth
             size='small'
-            label='Search'
+            label='Search by Order ID or Customer Name'
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
             sx={{ marginBottom: '20px' }}
           />
         </Box>
+
         <Divider sx={{ mt: 4 }} />
+
+        {/* Table */}
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
-                {columns.map(column => (
-                  <TableCell key={column.id}>
-                    <TableSortLabel
-                      active={orderBy === column.id}
-                      direction={orderBy === column.id ? order : 'asc'}
-                      onClick={() => handleRequestSort(column.id)}
-                    >
-                      {column.label}
-                    </TableSortLabel>
-                  </TableCell>
-                ))}
+              <TableCell>Sr No.</TableCell>
+                <TableCell>Order ID</TableCell>
+                <TableCell>Customer</TableCell>
+                <TableCell>Amount</TableCell>
+                <TableCell>Payment Status</TableCell>
+                <TableCell>Order Date</TableCell>
+                <TableCell>City</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedData
+              {filteredOrders
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map(row => (
-                  <TableRow key={row.id}>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>{row.customer}</TableCell>
-                    <TableCell>{row.amount}</TableCell>
-                    <TableCell>{row.paymentMethod}</TableCell>
-                    <TableCell>
-                      <StatusChip status={row.paymentStatus} />
-                    </TableCell>
-                    <TableCell>
-                      <StatusChip status={row.status} />
-                    </TableCell>
-                    <TableCell>{row.createdAt}</TableCell>
-                    <TableCell>{row.store}</TableCell>
+                .map((row, index) => (
+                  <TableRow key={row.orderId || 'N/A'}>
+                      
+                    
+                     <TableCell>{index + 1}</TableCell>
+                    <TableCell>{row.orderId || 'N/A'}</TableCell>
+                    <TableCell>{row.user?.name || 'N/A'}</TableCell>
+                    <TableCell>${row.totalPrice?.toFixed(2) || 'N/A'}</TableCell>
+                    <TableCell><StatusChip2 status={row.paymentStatus} /></TableCell>
+                    <TableCell>{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{row.deliveryAddress?.city || 'N/A'}</TableCell>
                   </TableRow>
                 ))}
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Pagination */}
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component='div'
-          count={fakeOrders.length}
+          count={filteredOrders.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -496,62 +550,65 @@ const VendorDashboard = ({ sidebarOpen }) => {
       </Paper>
 
       <Paper elevation={3} sx={{ mt: 4 }}>
-        <Typography variant='h4' gutterBottom sx={{ p: 2 }}>
-          Top Selling Product
-        </Typography>
-        <Box sx={{ px: 4 }}>
-          <TextField
-            fullWidth
-            size='small'
-            label='Search'
-            sx={{ marginBottom: '20px' }}
-          />
-        </Box>
-        <Divider sx={{ mt: 4 }} />
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {columns.map(column => (
-                  <TableCell key={column.id}>
-                    <TableSortLabel
-                      active={orderBy === column.id}
-                      direction={orderBy === column.id ? order : 'asc'}
-                      onClick={() => handleRequestSort(column.id)}
-                    >
-                      {column.label}
-                    </TableSortLabel>
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sortedData
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map(row => (
-                  <TableRow key={row.id}>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>{row.name}</TableCell>
-                    <TableCell>{row.amount}</TableCell>
-                    <TableCell>
-                      <StatusChip status={row.status} />
-                    </TableCell>
-                    <TableCell>{row.createdAt}</TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component='div'
-          count={fakeOrders.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
+      <Typography variant='h4' gutterBottom sx={{ p: 2 }}>
+        Top Selling Product
+      </Typography>
+      <Box sx={{ px: 4 }}>
+        <TextField
+          fullWidth
+          size='small'
+          label='Search by Product ID'
+          value={searchId}
+          onChange={(e) => setSearchId(e.target.value)}
+          sx={{ marginBottom: '20px' }}
         />
-      </Paper>
+      </Box>
+      <Divider sx={{ mt: 4 }} />
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {columns.map(column => (
+                <TableCell key={column.id}>
+                  <TableSortLabel
+                    active={false} // Adjust this if sorting is implemented
+                    direction={'asc'} // Adjust this if sorting is implemented
+                    onClick={() => handleRequestSort(column.id)}
+                  >
+                    {column.label}
+                  </TableSortLabel>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredData
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((row, index) => (
+                <TableRow key={row.id}>
+                    <TableCell>{index + 1}</TableCell>
+                  <TableCell>{row.id}</TableCell>
+                  <TableCell>{row.name}</TableCell>
+                  <TableCell>{row.amount}</TableCell>
+                  <TableCell>
+                    <StatusChip status={row.status} />
+                  </TableCell>
+                  <TableCell>{new Date(row.createdAt).toLocaleDateString()}</TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component='div'
+        count={filteredData.length} // Count of filtered items
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+    </Paper>
     </Box>
   )
 }
